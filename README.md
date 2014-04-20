@@ -31,3 +31,9 @@ For concatenation in the previous Gruntfile setup, you’d add another key to th
 ## TODO
 
  * Make a yeoman generator to replace GRUNTLERPLATE with the project name.
+
+## Inspiration From
+
+ * [More maintainable Gruntfiles](http://www.thomasboyt.com/2013/09/01/maintainable-grunt.html) by [@thomasboyt](https://github.com/thomasboyt/)
+
+
