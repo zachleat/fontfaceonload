@@ -1,7 +1,7 @@
 {
 	"name": "GRUNTLERPLATE",
 	"version": "0.0.0",
-	"main": ["dist/GRUNTLERPLATE.js", "dist/GRUNTLERPLATE.css"],
+	"main": ["dist/GRUNTLERPLATE.js"],
 	"ignore": [
 		"**/.*"
 	],
