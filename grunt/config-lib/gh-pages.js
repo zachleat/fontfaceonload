@@ -1,4 +1,14 @@
 module.exports = {
-	options: {},
-	src: ["<%= pkg.config.dist %>/**/*", "<%= pkg.config.test %>/**/*", "<%= pkg.config.demo %>/**/*", "<%= pkg.config.bower %>/**/*"]
+	options: {
+		branch: "gh-pages",
+		tag: "v<%= pkg.version %>",
+		message: "GRUNTLERPLATE <%= pkg.version %> [ci skip]"
+	},
+	src: [
+		"bower.json",
+		"<%= pkg.config.dist %>/**/*",
+		"<%= pkg.config.test %>/**/*",
+		"<%= pkg.config.demo %>/**/*",
+		"<%= pkg.config.bower %>/**/*"
+	]
 };

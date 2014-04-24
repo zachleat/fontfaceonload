@@ -5,6 +5,7 @@ module.exports = {
 	jstest: {
 		src: []
 	}/*,
+	// #CSS
 	css: {
 		src: [],
 		dest: "<%= pkg.config.dist %>/<%= pkg.name %>.css"

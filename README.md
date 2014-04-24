@@ -1,7 +1,11 @@
 # GRUNTLERPLATE
 
 <!--
-[![Build Status](https://travis-ci.org/zachleat/GRUNTLERPLATE.png?branch=master)](https://travis-ci.org/zachleat/GRUNTLERPLATE)
+
+[![Build Status](https://img.shields.io/travis/zachleat/GRUNTLERPLATE/master.svg)](https://travis-ci.org/zachleat/GRUNTLERPLATE)
+[![Dependency Status](https://david-dm.org/zachleat/GRUNTLERPLATE.svg?theme=shields.io)](https://david-dm.org/zachleat/GRUNTLERPLATE)
+[![devDependency Status](https://david-dm.org/zachleat/GRUNTLERPLATE/dev-status.svg?theme=shields.io)](https://david-dm.org/zachleat/GRUNTLERPLATE#info=devDependencies)
+
 -->
 
 ## Using the repo
@@ -11,6 +15,7 @@ Run these commands:
  * `npm install`
  * `bower install`
  * `grunt init`
+ * `grunt` as normal.
 
 Replace instances of GRUNTLERPLATE with your project name.
 
