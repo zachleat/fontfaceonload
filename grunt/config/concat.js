@@ -1,13 +1,8 @@
 module.exports = {
 	js: {
-		src: ["src/sample-test.js"]
+		src: ["src/fontfaceonload.js"]
 	},
 	jstest: {
-		src: []
-	}/*,
-	// #CSS
-	css: {
-		src: [],
-		dest: "<%= pkg.config.dist %>/<%= pkg.name %>.css"
-	}*/
+		src: ["test/tests.js"]
+	}
 };

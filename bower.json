@@ -1,14 +1,13 @@
 {
-	"name": "GRUNTLERPLATE",
-	"version": "0.0.0",
-	"main": ["dist/GRUNTLERPLATE.js"],
+	"name": "fontfaceonload",
+	"version": "0.0.1",
+	"main": ["dist/fontfaceonload.js"],
 	"ignore": [
 		"**/.*"
 	],
-	"dependencies": {
-		"jquery": ">=1.9.1 <2.0.0"
-	},
+	"dependencies": {},
 	"devDependencies": {
+		"jquery": ">=1.9.1",
 		"qunit": ">=1.12.0"
 	}
 }

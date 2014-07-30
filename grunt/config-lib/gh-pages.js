@@ -2,7 +2,7 @@ module.exports = {
 	options: {
 		branch: "gh-pages",
 		tag: "v<%= pkg.version %>",
-		message: "GRUNTLERPLATE <%= pkg.version %> [ci skip]"
+		message: "fontfaceonload <%= pkg.version %> [ci skip]"
 	},
 	src: [
 		"bower.json",

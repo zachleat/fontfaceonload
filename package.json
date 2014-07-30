@@ -1,12 +1,12 @@
 {
-	"name": "GRUNTLERPLATE",
-	"version": "0.0.0",
-	"description": "A default Grunt config",
+	"name": "fontfaceonload",
+	"version": "0.0.1",
+	"description": "A simple utility to execute a callback when a webfont loads.",
 	"keywords": [
 		"grunt"
 	],
-	"homepage": "https://github.com/zachleat/GRUNTLERPLATE",
-	"bugs": "https://github.com/zachleat/GRUNTLERPLATE/issues",
+	"homepage": "https://github.com/zachleat/fontfaceonload",
+	"bugs": "https://github.com/zachleat/fontfaceonload/issues",
 	"author": {
 		"name": "Zach Leatherman",
 		"email": "zachleatherman@gmail.com",
@@ -16,7 +16,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git://github.com/zachleat/GRUNTLERPLATE.git"
+		"url": "git://github.com/zachleat/fontfaceonload.git"
 	},
 	"scripts": {
 		"test": "grunt test"
