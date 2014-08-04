@@ -1,0 +1,13 @@
+{
+	"name": "fontfaceonload",
+	"version": "0.0.1",
+	"main": ["dist/fontfaceonload.js"],
+	"ignore": [
+		"**/.*"
+	],
+	"dependencies": {},
+	"devDependencies": {
+		"jquery": ">=1.9.1",
+		"qunit": ">=1.12.0"
+	}
+}
