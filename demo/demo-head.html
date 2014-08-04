@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title></title>
+	<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Raleway:600,400">
+	<style>
+	p {
+		font-family: Raleway, monospace;
+	}
+	</style>
+	<script src="../dist/fontfaceonload.js"></script>
+	<script>
+	FontFaceOnload( "Raleway", {
+		success: function() {
+			alert( "Success!" );
+		}
+	});
+	</script>
+</head>
+<body>
+	This text will have a default font applied.
+	<p>This text will have the new font applied.</p>
+</body>
+</html>

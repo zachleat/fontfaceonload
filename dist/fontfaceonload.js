@@ -20,27 +20,7 @@
 		dimensions,
 		appended = false;
 
-	function load( fontFamily, options ) {
-		var startTime = new Date();
-
-		if( !parent ) {
-			parent = doc.createElement( 'div' );
-		}
-
-		parent.innerHTML = html.replace(/\%s/, SANS_SERIF_FONTS ) + html.replace(/\%s/, SERIF_FONTS );
-		sansSerif = parent.firstChild;
-		serif = sansSerif.nextSibling;
-
-		if( options.glyphs ) {
-			sansSerif.innerHTML += options.glyphs;
-			serif.innerHTML += options.glyphs;
-		}
-
-		if( !appended && doc.body ) {
-			appended = true;
-			doc.body.appendChild( parent );
-		}
-
+	function initialMeasurements( fontFamily ) {
 		dimensions = {
 			sansSerif: {
 				width: sansSerif.offsetWidth,
@@ -57,13 +37,37 @@
 		// loaded.
 		sansSerif.style.fontFamily = fontFamily + ', ' + SANS_SERIF_FONTS;
 		serif.style.fontFamily = fontFamily + ', ' + SERIF_FONTS;
+	}
+
+	function load( fontFamily, options ) {
+		var startTime = new Date();
+
+		if( !parent ) {
+			parent = doc.createElement( 'div' );
+		}
+
+		parent.innerHTML = html.replace(/\%s/, SANS_SERIF_FONTS ) + html.replace(/\%s/, SERIF_FONTS );
+		sansSerif = parent.firstChild;
+		serif = sansSerif.nextSibling;
+
+		if( options.glyphs ) {
+			sansSerif.innerHTML += options.glyphs;
+			serif.innerHTML += options.glyphs;
+		}
 
 		(function checkDimensions() {
-			if( Math.abs( dimensions.sansSerif.width - sansSerif.offsetWidth ) > TOLERANCE ||
-				Math.abs( dimensions.sansSerif.height - sansSerif.offsetHeight ) > TOLERANCE ||
-				Math.abs( dimensions.serif.width - serif.offsetWidth ) > TOLERANCE ||
-				Math.abs( dimensions.serif.height - serif.offsetHeight ) > TOLERANCE ) {
+			if( !appended && doc.body ) {
+				appended = true;
+				doc.body.appendChild( parent );
 
+				initialMeasurements( fontFamily );
+			}
+
+			if( appended && dimensions &&
+				( Math.abs( dimensions.sansSerif.width - sansSerif.offsetWidth ) > TOLERANCE ||
+					Math.abs( dimensions.sansSerif.height - sansSerif.offsetHeight ) > TOLERANCE ||
+					Math.abs( dimensions.serif.width - serif.offsetWidth ) > TOLERANCE ||
+					Math.abs( dimensions.serif.height - serif.offsetHeight ) > TOLERANCE ) ) {
 				options.success();
 			} else if( ( new Date() ).getTime() - startTime.getTime() > options.timeout ) {
 				options.error();
