@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title></title>
+	<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Raleway:600,400">
+	<style>
+	p {
+		font-family: Raleway, monospace;
+	}
+	</style>
+	<script>
+/*! fontfaceonload - v0.0.1 - 2014-08-04
+ * https://github.com/zachleat/fontfaceonload
+ * Copyright (c) 2014 Zach Leatherman (@zachleat)
+ * MIT License */(function(e,t){"use strict";function p(e){c={sansSerif:{width:f.offsetWidth,height:f.offsetHeight},serif:{width:l.offsetWidth,height:l.offsetHeight}},f.style.fontFamily=e+", "+s,l.style.fontFamily=e+", "+o}function d(e,r){var d=new Date;u||(u=t.createElement("div")),u.innerHTML=a.replace(/\%s/,s)+a.replace(/\%s/,o),f=u.firstChild,l=f.nextSibling,r.glyphs&&(f.innerHTML+=r.glyphs,l.innerHTML+=r.glyphs),function v(){!h&&t.body&&(h=!0,t.body.appendChild(u),p(e)),h&&c&&(Math.abs(c.sansSerif.width-f.offsetWidth)>i||Math.abs(c.sansSerif.height-f.offsetHeight)>i||Math.abs(c.serif.width-l.offsetWidth)>i||Math.abs(c.serif.height-l.offsetHeight)>i)?r.success():(new Date).getTime()-d.getTime()>r.timeout?r.error():setTimeout(function(){v()},n)}()}var n=100,r="AxmTYklsjo190QW",i=2,s="sans-serif",o="serif",u,a='<div style="font-family:%s;position:absolute;top:0;left:-9999px;font-size:48px">'+r+"</div>",f,l,c,h=!1,v=function(n,r){var i={glyphs:"",success:function(){},error:function(){},timeout:1e4},s;r||(r={});for(var o in i)r.hasOwnProperty(o)||(r[o]=i[o]);"fonts"in t?(t.fonts.load("1em "+n).then(function(){r.success(),e.clearTimeout(s)}),r.timeout&&(s=e.setTimeout(function(){r.error()},r.timeout))):d(n,r)};e.FontFaceOnload=v})(this,this.document);
+	</script>
+	<script>
+	FontFaceOnload( "Raleway", {
+		success: function() {
+			alert( "Success!" );
+		}
+	});
+	</script>
+</head>
+<body>
+	This text will have a default font applied.
+	<p>This text will have the new font applied.</p>
+</body>
+</html>

@@ -1,4 +1,4 @@
-/*! fontfaceonload - v0.0.1 - 2014-08-04
+/*! fontfaceonload - v0.1.1 - 2014-08-07
  * https://github.com/zachleat/fontfaceonload
  * Copyright (c) 2014 Zach Leatherman (@zachleat)
  * MIT License */
