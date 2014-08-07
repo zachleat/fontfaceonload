@@ -21,9 +21,55 @@ Include the library. Call the JavaScript.
 FontFaceOnload( "My Custom Font Family", {
 	success: function() {},
 	error: function() {},
-	timeout: 5000, // in ms. Optional, default is 10 seconds
+	timeout: 5000 // in ms. Optional, default is 10 seconds
+});
+```
+
+### Use with Content Fonts
+
+To allow the fallback font to be visible while the @font-face is loading, simply use FontFaceOnload like so:
+
+```
+FontFaceOnload( "My Custom Font Family", {
+	success: function() {
+		document.documentElement.className += " my-custom-font-family";
+	}
+});
+```
+
+and then use the class to scope your usage of the custom font:
+
+```
+body {
+	font-family: sans-serif;
+}
+.my-custom-font-family body {
+	font-family: My Custom Font Family, sans-serif;
+}
+```
+
+### Use with Icon Fonts
+
+To hide the fallback font so that weird fallback characters are not visible while the icon font is loading, use FontFaceOnload with the `glyphs` option like so:
+
+```
+FontFaceOnload( "My Custom Font Icon", {
+	success: function() {
+		document.documentElement.className += " my-custom-font-icon";
+	},
 	glyphs: "\uE600\uE601\uE602\uE605" // Optional, default is "". Useful for icon fonts: a few code points from your custom font icon.
 });
+```
+
+and then use the class to scope your usage of the custom font:
+
+```
+.icon {
+	display: none;
+}
+.my-custom-font-family .icon {
+	font-family: My Custom Font Icon, sans-serif;
+}
 ```
 
 ## How it Works
