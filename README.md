@@ -48,6 +48,8 @@ body {
 }
 ```
 
+An alternative approach that will also eliminate the FOIT as well as not require you to change your CSS is to use the [`loadCSS` library](https://github.com/filamentgroup/loadCSS#usage-example-with-content-fonts) to load the @font-face with a Data URI source block dynamically. `loadCSS` is smaller than `fontfaceonload`. The limitations to this approach include requiring you to manage which format to load (WOFF, WOFF2, TTF) and it will not work as well with icon fonts (since you need to a CSS class to style other sibling elements, like the descriptive text).
+
 ### Use with Icon Fonts
 
 To hide the fallback font so that weird fallback characters are not visible while the icon font is loading, use FontFaceOnload with the `glyphs` option like so:
