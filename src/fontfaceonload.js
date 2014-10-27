@@ -36,6 +36,7 @@
 
 	function load( fontFamily, options ) {
 		var startTime = new Date();
+		var tolerance;
 
 		if( !parent ) {
 			parent = doc.createElement( 'div' );
@@ -50,6 +51,13 @@
 			serif.innerHTML += options.glyphs;
 		}
 
+		if (options.tolerance) {
+			tolerance = options.tolerance;
+		}
+		else {
+			tolerance = TOLERANCE;
+		}
+
 		(function checkDimensions() {
 			if( !appended && doc.body ) {
 				appended = true;
@@ -59,10 +67,10 @@
 			}
 
 			if( appended && dimensions &&
-				( Math.abs( dimensions.sansSerif.width - sansSerif.offsetWidth ) > TOLERANCE ||
-					Math.abs( dimensions.sansSerif.height - sansSerif.offsetHeight ) > TOLERANCE ||
-					Math.abs( dimensions.serif.width - serif.offsetWidth ) > TOLERANCE ||
-					Math.abs( dimensions.serif.height - serif.offsetHeight ) > TOLERANCE ) ) {
+				( Math.abs( dimensions.sansSerif.width - sansSerif.offsetWidth ) > tolerance ||
+					Math.abs( dimensions.sansSerif.height - sansSerif.offsetHeight ) > tolerance ||
+					Math.abs( dimensions.serif.width - serif.offsetWidth ) > tolerance ||
+					Math.abs( dimensions.serif.height - serif.offsetHeight ) > tolerance ) ) {
 				options.success();
 			} else if( ( new Date() ).getTime() - startTime.getTime() > options.timeout ) {
 				options.error();
