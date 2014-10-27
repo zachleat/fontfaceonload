@@ -9,7 +9,25 @@
 		SERIF_FONTS = 'serif',
 
 		parent,
-		html = '<div style="font-family:%s;position:absolute;top:0;left:-9999px;font-size:48px">' + TEST_STRING + '</div>',
+		/**
+		 * See https://github.com/typekit/webfontloader/blob/master/src/core/fontruler.js#L41
+		 */
+		style = [
+			'display:block',
+			'position:absolute',
+			'top:-999px',
+			'left:-999px',
+			'font-size:300px',
+			'width:auto',
+			'height:auto',
+			'line-height:normal',
+			'margin:0',
+			'padding:0',
+			'font-variant:normal',
+			'white-space:nowrap',
+			'font-family:%s'
+		].join(';'),
+		html = '<div style="' + style + '">' + TEST_STRING + '</div>',
 		sansSerif,
 		serif,
 		dimensions,
