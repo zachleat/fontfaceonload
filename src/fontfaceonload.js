@@ -36,6 +36,7 @@
 
 	function load( fontFamily, options ) {
 		var startTime = new Date();
+		var delay;
 
 		if( !parent ) {
 			parent = doc.createElement( 'div' );
@@ -48,6 +49,13 @@
 		if( options.glyphs ) {
 			sansSerif.innerHTML += options.glyphs;
 			serif.innerHTML += options.glyphs;
+		}
+
+		if (options.delay) {
+			delay = options.delay;
+		}
+		else {
+			delay = DELAY;
 		}
 
 		(function checkDimensions() {
@@ -69,7 +77,7 @@
 			} else {
 				setTimeout(function() {
 					checkDimensions();
-				}, DELAY);
+				}, delay);
 			}
 		})();
 	} // end load()
