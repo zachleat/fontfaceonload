@@ -8,7 +8,6 @@
 		SANS_SERIF_FONTS = 'sans-serif',
 		SERIF_FONTS = 'serif',
 
-		parent,
 		/**
 		 * See https://github.com/typekit/webfontloader/blob/master/src/core/fontruler.js#L41
 		 */
@@ -27,11 +26,7 @@
 			'white-space:nowrap',
 			'font-family:%s'
 		].join(';'),
-		html = '<div style="' + style + '">' + TEST_STRING + '</div>',
-		sansSerif,
-		serif,
-		dimensions,
-		appended = false;
+		html = '<div style="' + style + '">' + TEST_STRING + '</div>';
 
 	var FontFaceOnloadInstance = function () {
 		this.appended = false;
@@ -61,16 +56,17 @@
 		// loaded.
 		sansSerif.style.fontFamily = fontFamily + ', ' + SANS_SERIF_FONTS;
 		serif.style.fontFamily = fontFamily + ', ' + SERIF_FONTS;
-	}
+	};
 
 	FontFaceOnloadInstance.prototype.load = function ( fontFamily, options ) {
-		var startTime = new Date();
-		var that = this;
-		var serif = that.serif;
-		var sansSerif = that.sansSerif;
-		var parent = that.parent;
-		var appended = that.appended;
-		var dimensions = that.dimensions;
+		var startTime = new Date(),
+			that = this,
+			serif = that.serif,
+			sansSerif = that.sansSerif,
+			parent = that.parent,
+			appended = that.appended,
+			dimensions = that.dimensions,
+			tolerance = options.tolerance || TOLERANCE;
 
 		if( !parent ) {
 			parent = that.parent = doc.createElement( 'div' );
@@ -96,10 +92,10 @@
 			dimensions = that.dimensions;
 
 			if( appended && dimensions &&
-				( Math.abs( dimensions.sansSerif.width - sansSerif.offsetWidth ) > TOLERANCE ||
-					Math.abs( dimensions.sansSerif.height - sansSerif.offsetHeight ) > TOLERANCE ||
-					Math.abs( dimensions.serif.width - serif.offsetWidth ) > TOLERANCE ||
-					Math.abs( dimensions.serif.height - serif.offsetHeight ) > TOLERANCE ) ) {
+				( Math.abs( dimensions.sansSerif.width - sansSerif.offsetWidth ) > tolerance ||
+					Math.abs( dimensions.sansSerif.height - sansSerif.offsetHeight ) > tolerance ||
+					Math.abs( dimensions.serif.width - serif.offsetWidth ) > tolerance ||
+					Math.abs( dimensions.serif.height - serif.offsetHeight ) > tolerance ) ) {
 				options.success();
 			} else if( ( new Date() ).getTime() - startTime.getTime() > options.timeout ) {
 				options.error();
@@ -109,7 +105,7 @@
 				}, DELAY);
 			}
 		})();
-	} // end load()
+	}; // end load()
 
 	FontFaceOnloadInstance.prototype.init = function( fontFamily, options ) {
 		var that = this;
