@@ -66,7 +66,8 @@
 			parent = that.parent,
 			appended = that.appended,
 			dimensions = that.dimensions,
-			tolerance = options.tolerance || TOLERANCE;
+			tolerance = options.tolerance || TOLERANCE,
+			delay = options.delay || DELAY;
 
 		if( !parent ) {
 			parent = that.parent = doc.createElement( 'div' );
@@ -102,7 +103,7 @@
 			} else {
 				setTimeout(function() {
 					checkDimensions();
-				}, DELAY);
+				}, delay );
 			}
 		})();
 	}; // end load()
