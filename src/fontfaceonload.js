@@ -8,9 +8,7 @@
 		SANS_SERIF_FONTS = 'sans-serif',
 		SERIF_FONTS = 'serif',
 
-		/**
-		 * See https://github.com/typekit/webfontloader/blob/master/src/core/fontruler.js#L41
-		 */
+		// See https://github.com/typekit/webfontloader/blob/master/src/core/fontruler.js#L41
 		style = [
 			'display:block',
 			'position:absolute',
