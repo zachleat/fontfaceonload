@@ -33,8 +33,19 @@
 		dimensions,
 		appended = false;
 
-	function initialMeasurements( fontFamily ) {
-		dimensions = {
+	var FontFaceOnloadInstance = function () {
+		this.appended = false;
+		this.dimensions = undefined;
+		this.serif = undefined;
+		this.sansSerif = undefined;
+		this.parent = undefined;
+	};
+
+	FontFaceOnloadInstance.prototype.initialMeasurements = function ( fontFamily ) {
+		var sansSerif = this.sansSerif;
+		var serif = this.serif;
+
+		this.dimensions = {
 			sansSerif: {
 				width: sansSerif.offsetWidth,
 				height: sansSerif.offsetHeight
@@ -52,16 +63,22 @@
 		serif.style.fontFamily = fontFamily + ', ' + SERIF_FONTS;
 	}
 
-	function load( fontFamily, options ) {
+	FontFaceOnloadInstance.prototype.load = function ( fontFamily, options ) {
 		var startTime = new Date();
+		var that = this;
+		var serif = that.serif;
+		var sansSerif = that.sansSerif;
+		var parent = that.parent;
+		var appended = that.appended;
+		var dimensions = that.dimensions;
 
 		if( !parent ) {
-			parent = doc.createElement( 'div' );
+			parent = that.parent = doc.createElement( 'div' );
 		}
 
 		parent.innerHTML = html.replace(/\%s/, SANS_SERIF_FONTS ) + html.replace(/\%s/, SERIF_FONTS );
-		sansSerif = parent.firstChild;
-		serif = sansSerif.nextSibling;
+		sansSerif = that.sansSerif = parent.firstChild;
+		serif = that.serif = sansSerif.nextSibling;
 
 		if( options.glyphs ) {
 			sansSerif.innerHTML += options.glyphs;
@@ -70,11 +87,13 @@
 
 		(function checkDimensions() {
 			if( !appended && doc.body ) {
-				appended = true;
+				appended = that.appended = true;
 				doc.body.appendChild( parent );
 
-				initialMeasurements( fontFamily );
+				that.initialMeasurements( fontFamily );
 			}
+
+			dimensions = that.dimensions;
 
 			if( appended && dimensions &&
 				( Math.abs( dimensions.sansSerif.width - sansSerif.offsetWidth ) > TOLERANCE ||
@@ -92,7 +111,8 @@
 		})();
 	} // end load()
 
-	var FontFaceOnload = function( fontFamily, options ) {
+	FontFaceOnloadInstance.prototype.init = function( fontFamily, options ) {
+		var that = this;
 		var defaultOptions = {
 				glyphs: '',
 				success: function() {},
@@ -124,8 +144,13 @@
 				}, options.timeout );
 			}
 		} else {
-			load( fontFamily, options );
+			that.load( fontFamily, options );
 		}
+	};
+
+	var FontFaceOnload = function( fontFamily, options ) {
+		var instance = new FontFaceOnloadInstance();
+		instance.init(fontFamily, options);
 	};
 
 	// intentional global
