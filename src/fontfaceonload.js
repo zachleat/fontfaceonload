@@ -26,7 +26,7 @@
 		].join(';'),
 		html = '<div style="' + style + '">' + TEST_STRING + '</div>';
 
-	var FontFaceOnloadInstance = function () {
+	var FontFaceOnloadInstance = function() {
 		this.appended = false;
 		this.dimensions = undefined;
 		this.serif = undefined;
@@ -146,6 +146,8 @@
 	var FontFaceOnload = function( fontFamily, options ) {
 		var instance = new FontFaceOnloadInstance();
 		instance.init(fontFamily, options);
+
+		return instance;
 	};
 
 	// intentional global
