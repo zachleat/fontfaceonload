@@ -126,7 +126,8 @@
 			}
 		}
 
-		if( "fonts" in doc ) {
+		// For some reason this was failing on afontgarde + icon fonts.
+		if( !options.glyphs && "fonts" in doc ) {
 			doc.fonts.load( "1em " + fontFamily ).then(function() {
 				options.success();
 
