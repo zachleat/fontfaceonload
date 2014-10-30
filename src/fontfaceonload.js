@@ -35,8 +35,8 @@
 	};
 
 	FontFaceOnloadInstance.prototype.initialMeasurements = function ( fontFamily ) {
-		var sansSerif = this.sansSerif;
-		var serif = this.serif;
+		var sansSerif = this.sansSerif,
+			serif = this.serif;
 
 		this.dimensions = {
 			sansSerif: {
@@ -107,8 +107,8 @@
 	}; // end load()
 
 	FontFaceOnloadInstance.prototype.init = function( fontFamily, options ) {
-		var that = this;
-		var defaultOptions = {
+		var that = this,
+			defaultOptions = {
 				glyphs: '',
 				success: function() {},
 				error: function() {},
