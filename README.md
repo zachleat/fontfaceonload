@@ -4,6 +4,8 @@
 [![Dependency Status](https://david-dm.org/zachleat/fontfaceonload.svg?theme=shields.io)](https://david-dm.org/zachleat/fontfaceonload)
 [![devDependency Status](https://david-dm.org/zachleat/fontfaceonload/dev-status.svg?theme=shields.io)](https://david-dm.org/zachleat/fontfaceonload#info=devDependencies)
 
+## [Demo](http://zachleat.github.io/fontfaceonload/demo/demo.html)
+
 ## Usage
 
 Use with any existing @font-face declaration.
