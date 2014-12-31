@@ -1,6 +1,6 @@
 {
 	"name": "fontfaceonload",
-	"version": "0.1.3",
+	"version": "0.1.4",
 	"description": "A simple utility to execute a callback when a webfont loads.",
 	"keywords": [
 		"grunt"
