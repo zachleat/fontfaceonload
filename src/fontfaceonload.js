@@ -93,7 +93,7 @@
 		function checkWeights() {
 			var j, k,
 				test = [ 400, 600, 700, 300, 500, 800, 900, 100, 200 ],
-				weights = [];
+				weightCount = 0;
 
 			for( j = 0, k = test.length; j <= k; j++ ) {
 				dimensions = that.getMeasurements();
@@ -102,18 +102,16 @@
 				if( hasNewDimensions( dimensions.sansSerif, sansSerif, 0 ) ||
 						hasNewDimensions( dimensions.serif, serif, 0 ) ) {
 
-					weights.push( test [ j ] );
+					weightCount++;
 
-					if( weights.length >= options.weights ) {
+					if( weightCount >= options.weights ) {
 						break;
 					}
 				}
 			}
 
-			if( weights.length >= options.weights ) {
-				for( j = 0, k = weights.length; j < k; j++ ) {
-					options.success();
-				}
+			if( weightCount >= options.weights ) {
+				options.success();
 				ref.removeChild( parent );
 			} else if( isTimeout() ) {
 				options.error();
