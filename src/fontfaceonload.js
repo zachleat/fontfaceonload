@@ -91,17 +91,18 @@
 		}
 
 		function checkWeights() {
-			var j, k,
-				test = [ 400, 600, 700, 300, 500, 800, 900, 100, 200 ],
-				weightCount = 0;
+			var j = 100,
+				k,
+				weightCount = 1;
 
-			for( j = 0, k = test.length; j <= k; j++ ) {
+			sansSerif.style.fontWeight = serif.style.fontWeight = j;
+
+			for( j = 200, k = 900; j <= k; j += 100 ) {
 				dimensions = that.getMeasurements();
-				sansSerif.style.fontWeight = serif.style.fontWeight = test[ j ];
+				sansSerif.style.fontWeight = serif.style.fontWeight = j;
 
 				if( hasNewDimensions( dimensions.sansSerif, sansSerif, 0 ) ||
 						hasNewDimensions( dimensions.serif, serif, 0 ) ) {
-
 					weightCount++;
 
 					if( weightCount >= options.weights ) {
@@ -163,24 +164,28 @@
 
 	FontFaceOnloadInstance.prototype.checkFontFaces = function( timeout ) {
 		var _t = this,
-			checkCount = 0,
-			weights = {};
+			uniqueWeightsCount = 0,
+			uniqueWeights = {},
+			promises = [];
 
 		doc.fonts.forEach(function( font ) {
 			if( font.family.toLowerCase() === _t.fontFamily.toLowerCase() ) {
-				if( !weights[ font.weight ] ) {
-					checkCount++;
-					weights[ font.weight ] = true;
+				if( !uniqueWeights[ font.weight ] ) {
+					uniqueWeightsCount++;
+					uniqueWeights[ font.weight ] = true;
 				}
 
-				font.load().then(function() {
-					_t.options.success();
-					win.clearTimeout( timeout );
-				});
+				promises.push( font.load() );
 			}
 		});
 
-		if( checkCount !== _t.options.weights ) {
+		Promise.all( promises ).then(function() {
+			_t.options.success();
+			win.clearTimeout( timeout );
+		});
+
+		// If a stylesheet is added asynchronously later
+		if( uniqueWeightsCount !== _t.options.weights ) {
 			win.setTimeout(function() {
 				_t.checkFontFaces( timeout );
 			}, _t.options.delay );

@@ -32,6 +32,7 @@
 		"start": false,
 		"stop": false,
 		"strictEqual": false,
-		"test": false
+		"test": false,
+		"Promise": false
 	}
 }
