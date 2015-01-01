@@ -1,12 +1,18 @@
 ;(function( win, doc ) {
 	"use strict";
 
-	var INTERVAL = 100,
-		TEST_STRING = 'AxmTYklsjo190QW',
-		TOLERANCE = 2, // px
-
+	var TEST_STRING = 'AxmTYklsjo190QW',
 		SANS_SERIF_FONTS = 'sans-serif',
 		SERIF_FONTS = 'serif',
+
+		defaultOptions = {
+			tolerance: 2, // px
+			delay: 100,
+			glyphs: '',
+			success: function() {},
+			error: function() {},
+			timeout: 5000
+		},
 
 		// See https://github.com/typekit/webfontloader/blob/master/src/core/fontruler.js#L41
 		style = [
@@ -21,42 +27,33 @@
 			'margin:0',
 			'padding:0',
 			'font-variant:normal',
-			'white-space:nowrap',
-			'font-family:%s'
-		].join(';'),
-		html = '<div style="' + style + '">' + TEST_STRING + '</div>';
+			'white-space:nowrap'
+		],
+		html = '<div style="%s">' + TEST_STRING + '</div>';
 
 	var FontFaceOnloadInstance = function() {
+		this.fontFamily = '';
 		this.appended = false;
-		this.dimensions = undefined;
 		this.serif = undefined;
 		this.sansSerif = undefined;
 		this.parent = undefined;
+		this.options = {};
 	};
 
-	FontFaceOnloadInstance.prototype.initialMeasurements = function ( fontFamily ) {
-		var sansSerif = this.sansSerif,
-			serif = this.serif;
-
-		this.dimensions = {
+	FontFaceOnloadInstance.prototype.getMeasurements = function () {
+		return {
 			sansSerif: {
-				width: sansSerif.offsetWidth,
-				height: sansSerif.offsetHeight
+				width: this.sansSerif.offsetWidth,
+				height: this.sansSerif.offsetHeight
 			},
 			serif: {
-				width: serif.offsetWidth,
-				height: serif.offsetHeight
+				width: this.serif.offsetWidth,
+				height: this.serif.offsetHeight
 			}
 		};
-
-		// Make sure we set the new font-family after we take our initial dimensions:
-		// handles the case where FontFaceOnload is called after the font has already
-		// loaded.
-		sansSerif.style.fontFamily = fontFamily + ', ' + SANS_SERIF_FONTS;
-		serif.style.fontFamily = fontFamily + ', ' + SERIF_FONTS;
 	};
 
-	FontFaceOnloadInstance.prototype.load = function ( fontFamily, options ) {
+	FontFaceOnloadInstance.prototype.load = function () {
 		var startTime = new Date(),
 			that = this,
 			serif = that.serif,
@@ -64,21 +61,32 @@
 			parent = that.parent,
 			appended = that.appended,
 			dimensions,
-			tolerance = options.tolerance || TOLERANCE,
-			interval = options.delay || INTERVAL,
+			options = this.options,
 			ref = options.reference;
+
+		var sansSerifHtml = html.replace( /\%s/, style.concat( "font-family:" + SANS_SERIF_FONTS ).join( ";" ) ),
+			serifHtml = html.replace( /\%s/, style.concat( "font-family:" + SERIF_FONTS ).join( ";" ) );
 
 		if( !parent ) {
 			parent = that.parent = doc.createElement( "div" );
 		}
 
-		parent.innerHTML = html.replace(/\%s/, SANS_SERIF_FONTS ) + html.replace(/\%s/, SERIF_FONTS );
+		parent.innerHTML = sansSerifHtml + serifHtml;
 		sansSerif = that.sansSerif = parent.firstChild;
 		serif = that.serif = sansSerif.nextSibling;
 
 		if( options.glyphs ) {
 			sansSerif.innerHTML += options.glyphs;
 			serif.innerHTML += options.glyphs;
+		}
+
+		function hasNewDimensions( dims, el, tolerance ) {
+			return Math.abs( dims.width - el.offsetWidth ) > tolerance ||
+					Math.abs( dims.height - el.offsetHeight ) > tolerance;
+		}
+
+		function isTimeout() {
+			return ( new Date() ).getTime() - startTime.getTime() > options.timeout;
 		}
 
 		(function checkDimensions() {
@@ -89,45 +97,47 @@
 				ref.appendChild( parent );
 				appended = that.appended = true;
 
-				that.initialMeasurements( fontFamily );
+				dimensions = that.getMeasurements();
+
+				// Make sure we set the new font-family after we take our initial dimensions:
+				// handles the case where FontFaceOnload is called after the font has already
+				// loaded.
+				sansSerif.style.fontFamily = that.fontFamily + ', ' + SANS_SERIF_FONTS;
+				serif.style.fontFamily = that.fontFamily + ', ' + SERIF_FONTS;
 			}
 
-			dimensions = that.dimensions;
-
 			if( appended && dimensions &&
-				( Math.abs( dimensions.sansSerif.width - sansSerif.offsetWidth ) > tolerance ||
-					Math.abs( dimensions.sansSerif.height - sansSerif.offsetHeight ) > tolerance ||
-					Math.abs( dimensions.serif.width - serif.offsetWidth ) > tolerance ||
-					Math.abs( dimensions.serif.height - serif.offsetHeight ) > tolerance ) ) {
+				( hasNewDimensions( dimensions.sansSerif, sansSerif, options.tolerance ) ||
+					hasNewDimensions( dimensions.serif, serif, options.tolerance ) ) ) {
+
 				options.success();
-				ref.removeChild( parent );
-			} else if( ( new Date() ).getTime() - startTime.getTime() > options.timeout ) {
+			} else if( isTimeout() ) {
 				options.error();
 			} else {
 				if( !appended && "requestAnimationFrame" in window ) {
-					window.requestAnimationFrame( checkDimensions );
+					win.requestAnimationFrame( checkDimensions );
 				} else {
-					setTimeout(function() {
-						checkDimensions();
-					}, interval );
+					win.setTimeout( checkDimensions, options.delay );
 				}
 			}
 		})();
 	}; // end load()
 
-	FontFaceOnloadInstance.prototype.init = function( fontFamily, options ) {
-		var that = this,
-			defaultOptions = {
-				glyphs: '',
-				success: function() {},
-				error: function() {},
-				timeout: 5000
-			},
-			timeout;
+	FontFaceOnloadInstance.prototype.checkFontFaces = function( timeout ) {
+		var _t = this;
 
-		if( !options ) {
-			options = {};
-		}
+		doc.fonts.forEach(function( font ) {
+			if( font.family.toLowerCase() === _t.fontFamily.toLowerCase() ) {
+				font.load().then(function() {
+					_t.options.success();
+					win.clearTimeout( timeout );
+				});
+			}
+		});
+	};
+
+	FontFaceOnloadInstance.prototype.init = function( fontFamily, options ) {
+		var timeout;
 
 		for( var j in defaultOptions ) {
 			if( !options.hasOwnProperty( j ) ) {
@@ -135,21 +145,20 @@
 			}
 		}
 
+		this.options = options;
+		this.fontFamily = fontFamily;
+
 		// For some reason this was failing on afontgarde + icon fonts.
 		if( !options.glyphs && "fonts" in doc ) {
-			doc.fonts.load( "1em " + fontFamily ).then(function() {
-				options.success();
-
-				win.clearTimeout( timeout );
-			});
-
 			if( options.timeout ) {
 				timeout = win.setTimeout(function() {
 					options.error();
 				}, options.timeout );
 			}
+
+			this.checkFontFaces( timeout );
 		} else {
-			that.load( fontFamily, options );
+			this.load();
 		}
 	};
 
