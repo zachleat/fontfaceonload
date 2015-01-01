@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title></title>
+	<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Raleway:400">
+	<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Raleway:600">
+	<style>
+	p {
+		font-family: serif;
+	}
+	.raleway #normal {
+		font-family: Raleway, serif;
+		font-weight: 400;
+	}
+	#bold {
+		font-weight: 600;
+	}
+	.raleway #bold {
+		font-family: Raleway, serif;
+	}
+	</style>
+</head>
+<body>
+	This text will have a default font applied.
+	<p id="normal">This text will have the new font applied.</p>
+	<p id="bold">This text will have the new font applied.</p>
+	<script src="../dist/fontfaceonload.js"></script>
+	<script>
+	var docEl = document.documentElement;
+
+	FontFaceOnload( "Raleway", {
+		weights: 2,
+		success: function() {
+			docEl.className += " raleway";
+			console.log( "Success!" );
+		},
+		error: function() {
+			console.log( "Timeout" );
+		}
+	});
+
+	// window.setTimeout(function() {
+	// 	var el = document.createElement( "link" );
+	// 	el.href = "http://fonts.googleapis.com/css?family=Raleway:400";
+	// 	el.rel = "stylesheet";
+	// 	document.body.appendChild( el );
+	// }, 2000 );
+	</script>
+</body>
+</html>
