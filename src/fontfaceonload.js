@@ -11,7 +11,9 @@
 			glyphs: '',
 			success: function() {},
 			error: function() {},
-			timeout: 5000
+			timeout: 5000,
+			weight: '400', // normal
+			style: 'normal'
 		},
 
 		// See https://github.com/typekit/webfontloader/blob/master/src/core/fontruler.js#L41
@@ -64,8 +66,15 @@
 			options = this.options,
 			ref = options.reference;
 
-		var sansSerifHtml = html.replace( /\%s/, style.concat( "font-family:" + SANS_SERIF_FONTS ).join( ";" ) ),
-			serifHtml = html.replace( /\%s/, style.concat( "font-family:" + SERIF_FONTS ).join( ";" ) );
+		function getStyle( family ) {
+			return style
+				.concat( [ 'font-weight:' + options.weight, 'font-style:' + options.style ] )
+				.concat( "font-family:" + family )
+				.join( ";" );
+		}
+
+		var sansSerifHtml = html.replace( /\%s/, getStyle( SANS_SERIF_FONTS ) ),
+			serifHtml = html.replace( /\%s/, getStyle(  SERIF_FONTS ) );
 
 		if( !parent ) {
 			parent = that.parent = doc.createElement( "div" );
@@ -125,9 +134,10 @@
 
 	FontFaceOnloadInstance.prototype.checkFontFaces = function( timeout ) {
 		var _t = this;
-
 		doc.fonts.forEach(function( font ) {
-			if( font.family.toLowerCase() === _t.fontFamily.toLowerCase() ) {
+			if( font.family.toLowerCase() === _t.fontFamily.toLowerCase() &&
+				font.weight === ''+_t.options.weight &&
+				font.style === _t.options.style ) {
 				font.load().then(function() {
 					_t.options.success();
 					win.clearTimeout( timeout );
