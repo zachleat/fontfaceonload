@@ -1,78 +1,78 @@
 # fontfaceonload
 
 [![Build Status](https://img.shields.io/travis/zachleat/fontfaceonload/master.svg)](https://travis-ci.org/zachleat/fontfaceonload)
-[![Dependency Status](https://david-dm.org/zachleat/fontfaceonload.svg?theme=shields.io)](https://david-dm.org/zachleat/fontfaceonload)
-[![devDependency Status](https://david-dm.org/zachleat/fontfaceonload/dev-status.svg?theme=shields.io)](https://david-dm.org/zachleat/fontfaceonload#info=devDependencies)
+[![Dependency Status](https://david-dm.org/zachleat/fontfaceonload.svg)](https://david-dm.org/zachleat/fontfaceonload)
+[![devDependency Status](https://david-dm.org/zachleat/fontfaceonload/dev-status.svg)](https://david-dm.org/zachleat/fontfaceonload#info=devDependencies)
 
 ## [Demo](http://zachleat.github.io/fontfaceonload/demo/demo.html)
 
 ## Usage
 
-Use with any existing @font-face declaration.
+Use with any existing `@font-face` declaration.
 
-```
+```css
 @font-face {
-	font-family: My Custom Font Family;
-	/* src and other properties as normal */
+    font-family: My Custom Font Family;
+    /* src and other properties as normal */
 }
 ```
 
 Include the library. Call the JavaScript.
 
-```
-FontFaceOnload( "My Custom Font Family", {
-	success: function() {},
-	error: function() {},
-	timeout: 5000 // in ms. Optional, default is 10 seconds
+```js
+FontFaceOnload("My Custom Font Family", {
+    success: function() {},
+    error: function() {},
+    timeout: 5000 // in ms. Optional, default is 10 seconds
 });
 ```
 
 ### Use with Content Fonts
 
-To allow the fallback font to be visible while the @font-face is loading, simply use FontFaceOnload like so:
+To allow the fallback font to be visible while the `@font-face` is loading, simply use `FontFaceOnload` like so:
 
-```
-FontFaceOnload( "My Custom Font Family", {
-	success: function() {
-		document.documentElement.className += " my-custom-font-family";
-	}
+```js
+FontFaceOnload("My Custom Font Family", {
+    success: function() {
+        document.documentElement.className += " my-custom-font-family";
+    }
 });
 ```
 
 and then use the class to scope your usage of the custom font:
 
-```
+```css
 body {
-	font-family: sans-serif;
+    font-family: sans-serif;
 }
 .my-custom-font-family body {
-	font-family: My Custom Font Family, sans-serif;
+    font-family: My Custom Font Family, sans-serif;
 }
 ```
 
-An alternative approach that will also eliminate the FOIT as well as not require you to change your CSS is to use the [`loadCSS` library](https://github.com/filamentgroup/loadCSS#usage-example-with-content-fonts) to load the @font-face with a Data URI source block dynamically. `loadCSS` is smaller than `fontfaceonload`. The limitations to this approach include requiring you to manage which format to load (WOFF, WOFF2, TTF) and it will not work as well with icon fonts (since you need to a CSS class to style other sibling elements, like the descriptive text).
+An alternative approach that will also eliminate the FOIT as well as not require you to change your CSS is to use the [`loadCSS` library](https://github.com/filamentgroup/loadCSS#usage-example-with-content-fonts) to load the `@font-face` with a Data URI source block dynamically. `loadCSS` is smaller than `fontfaceonload`. The limitations to this approach include requiring you to manage which format to load (WOFF, WOFF2, TTF) and it will not work as well with icon fonts (since you need to a CSS class to style other sibling elements, like the descriptive text).
 
 ### Use with Icon Fonts
 
 To hide the fallback font so that weird fallback characters are not visible while the icon font is loading, use FontFaceOnload with the `glyphs` option like so:
 
-```
-FontFaceOnload( "My Custom Font Icon", {
-	success: function() {
-		document.documentElement.className += " my-custom-font-icon";
-	},
-	glyphs: "\uE600\uE601\uE602\uE605" // Optional, default is "". Useful for icon fonts: a few code points from your custom font icon.
+```js
+FontFaceOnload("My Custom Font Icon", {
+    success: function() {
+        document.documentElement.className += " my-custom-font-icon";
+    },
+    glyphs: "\uE600\uE601\uE602\uE605" // Optional, default is "". Useful for icon fonts: a few code points from your custom font icon.
 });
 ```
 
 and then use the class to scope your usage of the custom font:
 
-```
+```css
 .icon {
-	display: none;
+    display: none;
 }
 .my-custom-font-family .icon {
-	font-family: My Custom Font Icon, sans-serif;
+    font-family: My Custom Font Icon, sans-serif;
 }
 ```
 
@@ -102,4 +102,3 @@ For concatenation in the previous Gruntfile setup, you’d add another key to th
 ## License
 
 [MIT License](http://en.wikipedia.org/wiki/MIT_License)
-
