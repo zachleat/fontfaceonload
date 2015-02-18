@@ -5,6 +5,12 @@
 		SANS_SERIF_FONTS = 'sans-serif',
 		SERIF_FONTS = 'serif',
 
+		// lighter and bolder not supported
+		weightLookup = {
+			normal: '400',
+			bold: '700'
+		},
+
 		defaultOptions = {
 			tolerance: 2, // px
 			delay: 100,
@@ -136,7 +142,7 @@
 		var _t = this;
 		doc.fonts.forEach(function( font ) {
 			if( font.family.toLowerCase() === _t.fontFamily.toLowerCase() &&
-				font.weight === ''+_t.options.weight &&
+				( weightLookup[ font.weight ] || font.weight ) === ''+_t.options.weight &&
 				font.style === _t.options.style ) {
 				font.load().then(function() {
 					_t.options.success();
