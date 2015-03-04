@@ -2,3 +2,4 @@ node_modules/
 temp/
 dist/
 bower_components/
+/.idea/

@@ -1,5 +1,21 @@
-;(function( win, doc ) {
-	"use strict";
+(function (root, factory) {
+	'use strict';
+	if (typeof define === 'function' && define.amd) {
+		// AMD. Register as an anonymous module.
+		define([], factory);
+	} else if (typeof exports === 'object') {
+		// Node. Does not work with strict CommonJS, but
+		// only CommonJS-like environments that support module.exports,
+		// like Node.
+		module.exports = factory();
+	} else {
+		// Browser globals (root is window)
+		root.returnExports = factory();
+	}
+}(this, function () {
+	'use strict';
+	var doc = document,
+		win = window;
 
 	var TEST_STRING = 'AxmTYklsjo190QW',
 		SANS_SERIF_FONTS = 'sans-serif',
@@ -185,6 +201,5 @@
 		return instance;
 	};
 
-	// intentional global
-	win.FontFaceOnload = FontFaceOnload;
-})( this, this.document );
+	return FontFaceOnload;
+}));
