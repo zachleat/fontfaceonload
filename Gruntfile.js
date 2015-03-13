@@ -24,7 +24,7 @@ module.exports = function( grunt ) {
 			banner: grunt.file.read( "grunt/banner.txt" )
 		};
 
-	grunt.util._.merge( config, loadConfig( "./grunt/config-lib/" ), loadConfig( "./grunt/config/" ) );
+	grunt.util._.merge( config, loadConfig( "./grunt/config/" ) );
 
 	grunt.initConfig( config );
 
