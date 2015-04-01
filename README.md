@@ -102,3 +102,8 @@ For concatenation in the previous Gruntfile setup, you’d add another key to th
 ## License
 
 [MIT License](http://en.wikipedia.org/wiki/MIT_License)
+
+## Alternatives
+
+* [Font Face Observer](https://github.com/bramstein/fontfaceobserver) by [@bram_stein](https://twitter.com/bram_stein)
+* [Zenfonts](https://github.com/gaborlenard/zenfonts) by [@GaborLenard](https://twitter.com/GaborLenard)
