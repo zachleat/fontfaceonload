@@ -66,16 +66,17 @@
 			options = this.options,
 			ref = options.reference;
 
-		function getStyle( family ) {
-			var styleAttribute = document.createAttribute( 'style' );
-			
-			styleAttribute.value = style.concat( "font-family:" + family ).join( ";" );
+		function getStyle( family ) {      
+			var styleAttribute = style.concat( "font-family:" + family ).join( ";" );
+
 			return styleAttribute;
 		}
 
-
 		var sansSerifHtml = html.cloneNode( true ),
-        	serifHtml = html.cloneNode( true );
+			serifHtml = html.cloneNode( true );
+
+		sansSerifHtml.setAttribute( 'style', getStyle( SANS_SERIF_FONTS ) );
+		serifHtml.setAttribute( 'style', getStyle( SERIF_FONTS ) );
 
     	sansSerifHtml.styleAttributeNode( getStyle( SANS_SERIF_FONTS ) );
     	serifHtml.styleAttributeNode( getStyle( SERIF_FONTS ) );
