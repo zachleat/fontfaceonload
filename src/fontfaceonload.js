@@ -74,11 +74,8 @@
 			options = this.options,
 			ref = options.reference;
 
-		function getStyle( family ) {
-
-			var styleAttribute = document.createAttribute( 'style' );
-
-			styleAttribute.value = style
+	    function getStyle( family ) {      
+			var styleAttribute = style
 				.concat( [ 'font-weight:' + options.weight, 'font-style:' + options.style ] )
 				.concat( "font-family:" + family )
 				.join( ";" );
@@ -87,11 +84,11 @@
 		}
 
 		var sansSerifHtml = html.cloneNode( true ),
-				serifHtml = html.cloneNode( true );
+			serifHtml = html.cloneNode( true );
 
-		sansSerifHtml.styleAttributeNode( getStyle( SANS_SERIF_FONTS ) );
-		serifHtml.styleAttributeNode( getStyle( SERIF_FONTS ) );
-
+		sansSerifHtml.setAttribute( 'style', getStyle( SANS_SERIF_FONTS ) );
+		serifHtml.setAttribute( 'style', getStyle( SERIF_FONTS ) );
+			
 		if( !parent ) {
 			parent = that.parent = doc.createElement( "div" );
 		}
