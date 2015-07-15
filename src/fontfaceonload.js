@@ -78,9 +78,6 @@
 		sansSerifHtml.setAttribute( 'style', getStyle( SANS_SERIF_FONTS ) );
 		serifHtml.setAttribute( 'style', getStyle( SERIF_FONTS ) );
 
-    	sansSerifHtml.styleAttributeNode( getStyle( SANS_SERIF_FONTS ) );
-    	serifHtml.styleAttributeNode( getStyle( SERIF_FONTS ) );
-
 		if( !parent ) {
 			parent = that.parent = doc.createElement( "div" );
 		}
