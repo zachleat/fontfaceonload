@@ -82,10 +82,9 @@
 				.concat( [ 'font-weight:' + options.weight, 'font-style:' + options.style ] )
 				.concat( "font-family:" + family )
 				.join( ";" );
-		}
 
-		// var sansSerifHtml = html.replace( /\%s/, getStyle( SANS_SERIF_FONTS ) ),
-		//   serifHtml = html.replace( /\%s/, getStyle(  SERIF_FONTS ) );
+			return styleAttribute;
+		}
 
 		var sansSerifHtml = html.cloneNode( true ),
 				serifHtml = html.cloneNode( true );
