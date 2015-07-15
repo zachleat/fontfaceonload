@@ -37,7 +37,9 @@
 			'font-variant:normal',
 			'white-space:nowrap'
 		],
-		html = '<div style="%s">' + TEST_STRING + '</div>';
+		html = document.createElement("div");
+
+		html.appendChild( document.createTextNode( TEST_STRING ) );
 
 	var FontFaceOnloadInstance = function() {
 		this.fontFamily = '';
@@ -73,26 +75,37 @@
 			ref = options.reference;
 
 		function getStyle( family ) {
-			return style
+
+			var styleAttribute = document.createAttribute( 'style' );
+
+			styleAttribute.value = style
 				.concat( [ 'font-weight:' + options.weight, 'font-style:' + options.style ] )
 				.concat( "font-family:" + family )
 				.join( ";" );
 		}
 
-		var sansSerifHtml = html.replace( /\%s/, getStyle( SANS_SERIF_FONTS ) ),
-			serifHtml = html.replace( /\%s/, getStyle(  SERIF_FONTS ) );
+		// var sansSerifHtml = html.replace( /\%s/, getStyle( SANS_SERIF_FONTS ) ),
+		//   serifHtml = html.replace( /\%s/, getStyle(  SERIF_FONTS ) );
+
+		var sansSerifHtml = html.cloneNode( true ),
+				serifHtml = html.cloneNode( true );
+
+		sansSerifHtml.styleAttributeNode( getStyle( SANS_SERIF_FONTS ) );
+		serifHtml.styleAttributeNode( getStyle( SERIF_FONTS ) );
 
 		if( !parent ) {
 			parent = that.parent = doc.createElement( "div" );
 		}
 
-		parent.innerHTML = sansSerifHtml + serifHtml;
+		parent.appendChild( sansSerifHtml );
+		parent.appendChild( serifHtml );
+
 		sansSerif = that.sansSerif = parent.firstChild;
 		serif = that.serif = sansSerif.nextSibling;
 
 		if( options.glyphs ) {
-			sansSerif.innerHTML += options.glyphs;
-			serif.innerHTML += options.glyphs;
+			sansSerif.appendChild( document.createTextNode( options.glyphs ) );
+			serif.appendChild( document.createTextNode( options.glyphs ) );
 		}
 
 		function hasNewDimensions( dims, el, tolerance ) {
