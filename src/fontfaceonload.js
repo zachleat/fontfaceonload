@@ -5,12 +5,6 @@
 		SANS_SERIF_FONTS = 'sans-serif',
 		SERIF_FONTS = 'serif',
 
-		// lighter and bolder not supported
-		weightLookup = {
-			normal: '400',
-			bold: '700'
-		},
-
 		defaultOptions = {
 			tolerance: 2, // px
 			delay: 100,
@@ -138,11 +132,24 @@
 		})();
 	}; // end load()
 
+	FontFaceOnloadInstance.prototype.cleanFamilyName = function( family ) {
+		return family.replace( /[\'\"]/g, '' ).toLowerCase();
+	};
+	FontFaceOnloadInstance.prototype.cleanWeight = function( weight ) {
+		// lighter and bolder not supported
+		var weightLookup = {
+			normal: '400',
+			bold: '700'
+		};
+
+		return '' + (weightLookup[ weight ] || weight);
+	};
+
 	FontFaceOnloadInstance.prototype.checkFontFaces = function( timeout ) {
 		var _t = this;
 		doc.fonts.forEach(function( font ) {
-			if( font.family.toLowerCase() === _t.fontFamily.toLowerCase() &&
-				( weightLookup[ font.weight ] || font.weight ) === ''+_t.options.weight &&
+			if( _t.cleanFamilyName( font.family ) === _t.cleanFamilyName( _t.fontFamily ) &&
+				_t.cleanWeight( font.weight ) === _t.cleanWeight( _t.options.weight ) &&
 				font.style === _t.options.style ) {
 				font.load().then(function() {
 					_t.options.success();
