@@ -63,7 +63,7 @@
 			parent = that.parent,
 			appended = that.appended,
 			dimensions,
-			options = this.options,
+			options = that.options,
 			ref = options.reference;
 
 		function getStyle( family ) {
@@ -135,6 +135,7 @@
 	FontFaceOnloadInstance.prototype.cleanFamilyName = function( family ) {
 		return family.replace( /[\'\"]/g, '' ).toLowerCase();
 	};
+
 	FontFaceOnloadInstance.prototype.cleanWeight = function( weight ) {
 		// lighter and bolder not supported
 		var weightLookup = {
