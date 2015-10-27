@@ -1,96 +1,172 @@
-/*! fontfaceonload - v0.1.1 - 2014-08-07
+/*! fontfaceonload - v0.1.7 - 2015-10-26
  * https://github.com/zachleat/fontfaceonload
- * Copyright (c) 2014 Zach Leatherman (@zachleat)
+ * Copyright (c) 2015 Zach Leatherman (@zachleat)
  * MIT License */
 
 ;(function( win, doc ) {
 	"use strict";
 
-	var DELAY = 100,
-		TEST_STRING = 'AxmTYklsjo190QW',
-		TOLERANCE = 2, // px
-
+	var TEST_STRING = 'AxmTYklsjo190QW',
 		SANS_SERIF_FONTS = 'sans-serif',
 		SERIF_FONTS = 'serif',
 
-		parent,
-		html = '<div style="font-family:%s;position:absolute;top:0;left:-9999px;font-size:48px">' + TEST_STRING + '</div>',
-		sansSerif,
-		serif,
-		dimensions,
-		appended = false;
+		defaultOptions = {
+			tolerance: 2, // px
+			delay: 100,
+			glyphs: '',
+			success: function() {},
+			error: function() {},
+			timeout: 5000,
+			weight: '400', // normal
+			style: 'normal'
+		},
 
-	function initialMeasurements( fontFamily ) {
-		dimensions = {
+		// See https://github.com/typekit/webfontloader/blob/master/src/core/fontruler.js#L41
+		style = [
+			'display:block',
+			'position:absolute',
+			'top:-999px',
+			'left:-999px',
+			'font-size:48px',
+			'width:auto',
+			'height:auto',
+			'line-height:normal',
+			'margin:0',
+			'padding:0',
+			'font-variant:normal',
+			'white-space:nowrap'
+		],
+		html = '<div style="%s">' + TEST_STRING + '</div>';
+
+	var FontFaceOnloadInstance = function() {
+		this.fontFamily = '';
+		this.appended = false;
+		this.serif = undefined;
+		this.sansSerif = undefined;
+		this.parent = undefined;
+		this.options = {};
+	};
+
+	FontFaceOnloadInstance.prototype.getMeasurements = function () {
+		return {
 			sansSerif: {
-				width: sansSerif.offsetWidth,
-				height: sansSerif.offsetHeight
+				width: this.sansSerif.offsetWidth,
+				height: this.sansSerif.offsetHeight
 			},
 			serif: {
-				width: serif.offsetWidth,
-				height: serif.offsetHeight
+				width: this.serif.offsetWidth,
+				height: this.serif.offsetHeight
 			}
 		};
+	};
 
-		// Make sure we set the new font-family after we take our initial dimensions:
-		// handles the case where FontFaceOnload is called after the font has already
-		// loaded.
-		sansSerif.style.fontFamily = fontFamily + ', ' + SANS_SERIF_FONTS;
-		serif.style.fontFamily = fontFamily + ', ' + SERIF_FONTS;
-	}
+	FontFaceOnloadInstance.prototype.load = function () {
+		var startTime = new Date(),
+			that = this,
+			serif = that.serif,
+			sansSerif = that.sansSerif,
+			parent = that.parent,
+			appended = that.appended,
+			dimensions,
+			options = that.options,
+			ref = options.reference;
 
-	function load( fontFamily, options ) {
-		var startTime = new Date();
-
-		if( !parent ) {
-			parent = doc.createElement( 'div' );
+		function getStyle( family ) {
+			return style
+				.concat( [ 'font-weight:' + options.weight, 'font-style:' + options.style ] )
+				.concat( "font-family:" + family )
+				.join( ";" );
 		}
 
-		parent.innerHTML = html.replace(/\%s/, SANS_SERIF_FONTS ) + html.replace(/\%s/, SERIF_FONTS );
-		sansSerif = parent.firstChild;
-		serif = sansSerif.nextSibling;
+		var sansSerifHtml = html.replace( /\%s/, getStyle( SANS_SERIF_FONTS ) ),
+			serifHtml = html.replace( /\%s/, getStyle(  SERIF_FONTS ) );
+
+		if( !parent ) {
+			parent = that.parent = doc.createElement( "div" );
+		}
+
+		parent.innerHTML = sansSerifHtml + serifHtml;
+		sansSerif = that.sansSerif = parent.firstChild;
+		serif = that.serif = sansSerif.nextSibling;
 
 		if( options.glyphs ) {
 			sansSerif.innerHTML += options.glyphs;
 			serif.innerHTML += options.glyphs;
 		}
 
-		(function checkDimensions() {
-			if( !appended && doc.body ) {
-				appended = true;
-				doc.body.appendChild( parent );
+		function hasNewDimensions( dims, el, tolerance ) {
+			return Math.abs( dims.width - el.offsetWidth ) > tolerance ||
+					Math.abs( dims.height - el.offsetHeight ) > tolerance;
+		}
 
-				initialMeasurements( fontFamily );
+		function isTimeout() {
+			return ( new Date() ).getTime() - startTime.getTime() > options.timeout;
+		}
+
+		(function checkDimensions() {
+			if( !ref ) {
+				ref = doc.body;
+			}
+			if( !appended && ref ) {
+				ref.appendChild( parent );
+				appended = that.appended = true;
+
+				dimensions = that.getMeasurements();
+
+				// Make sure we set the new font-family after we take our initial dimensions:
+				// handles the case where FontFaceOnload is called after the font has already
+				// loaded.
+				sansSerif.style.fontFamily = that.fontFamily + ', ' + SANS_SERIF_FONTS;
+				serif.style.fontFamily = that.fontFamily + ', ' + SERIF_FONTS;
 			}
 
 			if( appended && dimensions &&
-				( Math.abs( dimensions.sansSerif.width - sansSerif.offsetWidth ) > TOLERANCE ||
-					Math.abs( dimensions.sansSerif.height - sansSerif.offsetHeight ) > TOLERANCE ||
-					Math.abs( dimensions.serif.width - serif.offsetWidth ) > TOLERANCE ||
-					Math.abs( dimensions.serif.height - serif.offsetHeight ) > TOLERANCE ) ) {
+				( hasNewDimensions( dimensions.sansSerif, sansSerif, options.tolerance ) ||
+					hasNewDimensions( dimensions.serif, serif, options.tolerance ) ) ) {
+
 				options.success();
-			} else if( ( new Date() ).getTime() - startTime.getTime() > options.timeout ) {
+			} else if( isTimeout() ) {
 				options.error();
 			} else {
-				setTimeout(function() {
-					checkDimensions();
-				}, DELAY);
+				if( !appended && "requestAnimationFrame" in window ) {
+					win.requestAnimationFrame( checkDimensions );
+				} else {
+					win.setTimeout( checkDimensions, options.delay );
+				}
 			}
 		})();
-	} // end load()
+	}; // end load()
 
-	var FontFaceOnload = function( fontFamily, options ) {
-		var defaultOptions = {
-				glyphs: '',
-				success: function() {},
-				error: function() {},
-				timeout: 10000
-			},
-			timeout;
+	FontFaceOnloadInstance.prototype.cleanFamilyName = function( family ) {
+		return family.replace( /[\'\"]/g, '' ).toLowerCase();
+	};
 
-		if( !options ) {
-			options = {};
-		}
+	FontFaceOnloadInstance.prototype.cleanWeight = function( weight ) {
+		// lighter and bolder not supported
+		var weightLookup = {
+			normal: '400',
+			bold: '700'
+		};
+
+		return '' + (weightLookup[ weight ] || weight);
+	};
+
+	FontFaceOnloadInstance.prototype.checkFontFaces = function( timeout ) {
+		var _t = this;
+		doc.fonts.forEach(function( font ) {
+			if( _t.cleanFamilyName( font.family ) === _t.cleanFamilyName( _t.fontFamily ) &&
+				_t.cleanWeight( font.weight ) === _t.cleanWeight( _t.options.weight ) &&
+				font.style === _t.options.style ) {
+				font.load().then(function() {
+					_t.options.success();
+					win.clearTimeout( timeout );
+				});
+			}
+		});
+	};
+
+	FontFaceOnloadInstance.prototype.init = function( fontFamily, options ) {
+		var timeout;
 
 		for( var j in defaultOptions ) {
 			if( !options.hasOwnProperty( j ) ) {
@@ -98,21 +174,28 @@
 			}
 		}
 
-		if( "fonts" in doc ) {
-			doc.fonts.load( "1em " + fontFamily ).then(function() {
-				options.success();
+		this.options = options;
+		this.fontFamily = fontFamily;
 
-				win.clearTimeout( timeout );
-			});
-
+		// For some reason this was failing on afontgarde + icon fonts.
+		if( !options.glyphs && "fonts" in doc ) {
 			if( options.timeout ) {
 				timeout = win.setTimeout(function() {
 					options.error();
 				}, options.timeout );
 			}
+
+			this.checkFontFaces( timeout );
 		} else {
-			load( fontFamily, options );
+			this.load();
 		}
+	};
+
+	var FontFaceOnload = function( fontFamily, options ) {
+		var instance = new FontFaceOnloadInstance();
+		instance.init(fontFamily, options);
+
+		return instance;
 	};
 
 	// intentional global

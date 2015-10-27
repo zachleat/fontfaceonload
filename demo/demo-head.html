@@ -7,6 +7,9 @@
 	<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Raleway:600,400">
 	<style>
 	p {
+		font-family: monospace;
+	}
+	.raleway p {
 		font-family: Raleway, monospace;
 	}
 	</style>
@@ -14,6 +17,7 @@
 	<script>
 	FontFaceOnload( "Raleway", {
 		success: function() {
+			document.documentElement.className += " raleway";
 			alert( "Success!" );
 		}
 	});

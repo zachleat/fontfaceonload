@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title></title>
+	<style>
+	@font-face {
+		font-family: Lato;
+		src: url('fonts/lato/lato-regular-webfont.woff2') format('woff2'),
+				 url('fonts/lato/lato-regular-webfont.woff') format('woff'),
+				 url('fonts/lato/lato-regular-webfont.ttf') format('truetype');
+		font-weight: 400;
+		font-style: normal;
+	}
+
+	@font-face {
+		font-family: LatoBold;
+		src: url('fonts/lato/lato-bold-webfont.woff2') format('woff2'),
+				 url('fonts/lato/lato-bold-webfont.woff') format('woff'),
+				 url('fonts/lato/lato-bold-webfont.ttf') format('truetype');
+		font-weight: 700;
+		font-style: normal;
+	}
+
+	@font-face {
+		font-family: LatoItalic;
+		src: url('fonts/lato/lato-italic-webfont.woff2') format('woff2'),
+				 url('fonts/lato/lato-italic-webfont.woff') format('woff'),
+				 url('fonts/lato/lato-italic-webfont.ttf') format('truetype');
+		font-weight: 400;
+		font-style: italic;
+	}
+
+	@font-face {
+		font-family: LatoBoldItalic;
+		src: url('fonts/lato/lato-bolditalic-webfont.woff2') format('woff2'),
+				 url('fonts/lato/lato-bolditalic-webfont.woff') format('woff'),
+				 url('fonts/lato/lato-bolditalic-webfont.ttf') format('truetype');
+		font-weight: 700;
+		font-style: italic;
+	}
+
+	#normal {
+		font-family: monospace;
+	}
+	.lato #normal {
+		font-family: Lato, monospace;
+	}
+	.lato-b-loaded strong {
+		font-family: LatoBold;
+	}
+	.lato-b-loaded em,
+	.lato-b-loaded blockquote {
+		font-family: LatoItalic;
+	}
+	.lato-b-loaded strong em,
+	.lato-b-loaded strong blockquote,
+	.lato-b-loaded em strong,
+	.lato-b-loaded blockquote strong {
+		font-family: LatoBoldItalic;
+	}
+	</style>
+</head>
+<body>
+	This text will have a default font applied.
+	<p id="normal">This text will have the new font applied. <strong>This will be bold.</strong> <em>This will be italic.</em> <strong><em>This will be both.</em></strong></p>
+	<script src="../dist/fontfaceonload.js"></script>
+	<script>
+	FontFaceOnload( "Lato", {
+		success: function() {
+			var docEl = document.documentElement;
+			docEl.className += " lato";
+
+			var counter = 0;
+			var options = 
+console.log( 'finished' );
+			FontFaceOnload( "LatoBold", {
+				weight: 700,
+				success: function() {
+console.log( 'watb', counter );
+					counter++;
+					if( counter === 3 ) {
+						docEl.className += " lato-b-loaded";
+					}
+				}
+			} );
+			FontFaceOnload( "LatoItalic", {
+				style: 'italic',
+				success: function() {
+console.log( 'wati', counter );
+					counter++;
+					if( counter === 3 ) {
+						docEl.className += " lato-b-loaded";
+					}
+				}
+			} );
+			FontFaceOnload( "LatoBoldItalic", {
+				weight: 700,
+				style: 'italic',
+				success: function() {
+console.log( 'watbi', counter );
+					counter++;
+					if( counter === 3 ) {
+						docEl.className += " lato-b-loaded";
+					}
+				}
+			} );
+		}
+	})
+	</script>
+</body>
+</html>
