@@ -1,4 +1,4 @@
-;(function( win, doc ) {
+;(function( win ) {
 	"use strict";
 
 	var TEST_STRING = 'AxmTYklsjo190QW',
@@ -13,10 +13,11 @@
 			error: function() {},
 			timeout: 5000,
 			weight: '400', // normal
-			style: 'normal'
+			style: 'normal',
+			win: win
 		},
 
-		// See https://github.com/typekit/webfontloader/blob/master/src/core/fontruler.js#L41
+	// See https://github.com/typekit/webfontloader/blob/master/src/core/fontruler.js#L41
 		style = [
 			'display:block',
 			'position:absolute',
@@ -77,7 +78,7 @@
 			serifHtml = html.replace( /\%s/, getStyle(  SERIF_FONTS ) );
 
 		if( !parent ) {
-			parent = that.parent = doc.createElement( "div" );
+			parent = that.parent = options.win.document.createElement( "div" );
 		}
 
 		parent.innerHTML = sansSerifHtml + serifHtml;
@@ -91,7 +92,7 @@
 
 		function hasNewDimensions( dims, el, tolerance ) {
 			return Math.abs( dims.width - el.offsetWidth ) > tolerance ||
-					Math.abs( dims.height - el.offsetHeight ) > tolerance;
+				Math.abs( dims.height - el.offsetHeight ) > tolerance;
 		}
 
 		function isTimeout() {
@@ -100,7 +101,7 @@
 
 		(function checkDimensions() {
 			if( !ref ) {
-				ref = doc.body;
+				ref = options.win.document.body;
 			}
 			if( !appended && ref ) {
 				ref.appendChild( parent );
@@ -117,14 +118,14 @@
 
 			if( appended && dimensions &&
 				( hasNewDimensions( dimensions.sansSerif, sansSerif, options.tolerance ) ||
-					hasNewDimensions( dimensions.serif, serif, options.tolerance ) ) ) {
+				hasNewDimensions( dimensions.serif, serif, options.tolerance ) ) ) {
 
 				options.success();
 			} else if( isTimeout() ) {
 				options.error();
 			} else {
-				if( !appended && "requestAnimationFrame" in window ) {
-					win.requestAnimationFrame( checkDimensions );
+				if( !appended && "requestAnimationFrame" in options.win ) {
+					options.win.requestAnimationFrame( checkDimensions );
 				} else {
 					win.setTimeout( checkDimensions, options.delay );
 				}
@@ -148,7 +149,7 @@
 
 	FontFaceOnloadInstance.prototype.checkFontFaces = function( timeout ) {
 		var _t = this;
-		doc.fonts.forEach(function( font ) {
+		_t.options.win.document.fonts.forEach(function( font ) {
 			if( _t.cleanFamilyName( font.family ) === _t.cleanFamilyName( _t.fontFamily ) &&
 				_t.cleanWeight( font.weight ) === _t.cleanWeight( _t.options.weight ) &&
 				font.style === _t.options.style ) {
@@ -173,7 +174,7 @@
 		this.fontFamily = fontFamily;
 
 		// For some reason this was failing on afontgarde + icon fonts.
-		if( !options.glyphs && "fonts" in doc ) {
+		if( !options.glyphs && "fonts" in options.win.document ) {
 			if( options.timeout ) {
 				timeout = win.setTimeout(function() {
 					options.error();
@@ -195,4 +196,4 @@
 
 	// intentional global
 	win.FontFaceOnload = FontFaceOnload;
-})( this, this.document );
+})( this );
