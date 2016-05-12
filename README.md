@@ -72,6 +72,7 @@ and then use the class to scope your usage of the custom font:
     display: none;
 }
 .my-custom-font-family .icon {
+    display: inline-block;
     font-family: My Custom Font Icon, sans-serif;
 }
 ```
