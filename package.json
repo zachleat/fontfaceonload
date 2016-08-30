@@ -56,4 +56,5 @@
 		"demo": "demo",
 		"bower": "bower_components"
 	}
+	"main": "./dist/fontfaceonload.js"
 }
