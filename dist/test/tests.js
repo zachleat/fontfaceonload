@@ -1,7 +1,7 @@
 (function( w, $ ) {
 	"use strict";
 
-	module( "Defaults", {
+	QUnit.module( "Defaults", {
 		setup: function() {
 			
 		},
@@ -10,7 +10,7 @@
 		}
 	});
 
-	test( "True", function() {
-		ok( true );
+	QUnit.test( "True", function( assert ) {
+		assert.ok( true );
 	});
 }( this, jQuery ));
