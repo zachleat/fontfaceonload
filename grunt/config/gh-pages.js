@@ -1,7 +1,6 @@
 module.exports = {
 	options: {
 		branch: "gh-pages",
-		tag: "v<%= pkg.version %>",
 		message: "fontfaceonload <%= pkg.version %> [ci skip]"
 	},
 	src: [
