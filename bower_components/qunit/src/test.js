@@ -1,298 +1,774 @@
-function Test( settings ) {
+import global from "global";
+
+import { begin } from "./core";
+import { setTimeout, clearTimeout } from "./globals";
+import { emit } from "./events";
+import Assert from "./assert";
+
+import config from "./core/config";
+import {
+	defined,
+	diff,
+	extend,
+	generateHash,
+	hasOwn,
+	inArray,
+	now,
+	objectType
+} from "./core/utilities";
+import { runLoggingCallbacks } from "./core/logging";
+import { extractStacktrace, sourceFromStacktrace } from "./core/stacktrace";
+import ProcessingQueue from "./core/processing-queue";
+
+import TestReport from "./reports/test";
+
+let focused = false;
+
+export default function Test( settings ) {
+	var i, l;
+
+	++Test.count;
+
+	this.expected = null;
 	extend( this, settings );
 	this.assertions = [];
-	this.testNumber = ++Test.count;
+	this.semaphore = 0;
+	this.module = config.currentModule;
+	this.stack = sourceFromStacktrace( 3 );
+	this.steps = [];
+
+	this.testReport = new TestReport( settings.testName, this.module.suiteReport, {
+		todo: settings.todo,
+		skip: settings.skip,
+		valid: this.valid()
+	} );
+
+	// Register unique strings
+	for ( i = 0, l = this.module.tests; i < l.length; i++ ) {
+		if ( this.module.tests[ i ].name === this.testName ) {
+			this.testName += " ";
+		}
+	}
+
+	this.testId = generateHash( this.module.name, this.testName );
+
+	this.module.tests.push( {
+		name: this.testName,
+		testId: this.testId,
+		skip: !!settings.skip
+	} );
+
+	if ( settings.skip ) {
+
+		// Skipped tests will fully ignore any sent callback
+		this.callback = function() {};
+		this.async = false;
+		this.expected = 0;
+	} else {
+		this.assert = new Assert( this );
+	}
 }
 
 Test.count = 0;
 
+function getNotStartedModules( startModule ) {
+	var module = startModule,
+		modules = [];
+
+	while ( module && module.testsRun === 0 ) {
+		modules.push( module );
+		module = module.parentModule;
+	}
+
+	return modules;
+}
+
 Test.prototype = {
-	init: function() {
-		var a, b, li,
-			tests = id( "qunit-tests" );
+	before: function() {
+		var i, startModule,
+			module = this.module,
+			notStartedModules = getNotStartedModules( module );
 
-		if ( tests ) {
-			b = document.createElement( "strong" );
-			b.innerHTML = this.nameHtml;
-
-			// `a` initialized at top of scope
-			a = document.createElement( "a" );
-			a.innerHTML = "Rerun";
-			a.href = QUnit.url({ testNumber: this.testNumber });
-
-			li = document.createElement( "li" );
-			li.appendChild( b );
-			li.appendChild( a );
-			li.className = "running";
-			li.id = this.id = "qunit-test-output" + testId++;
-
-			tests.appendChild( li );
-		}
-	},
-	setup: function() {
-		if (
-			// Emit moduleStart when we're switching from one module to another
-			this.module !== config.previousModule ||
-				// They could be equal (both undefined) but if the previousModule property doesn't
-				// yet exist it means this is the first test in a suite that isn't wrapped in a
-				// module, in which case we'll just emit a moduleStart event for 'undefined'.
-				// Without this, reporters can get testStart before moduleStart  which is a problem.
-				!hasOwn.call( config, "previousModule" )
-		) {
-			if ( hasOwn.call( config, "previousModule" ) ) {
-				runLoggingCallbacks( "moduleDone", QUnit, {
-					name: config.previousModule,
-					failed: config.moduleStats.bad,
-					passed: config.moduleStats.all - config.moduleStats.bad,
-					total: config.moduleStats.all
-				});
-			}
-			config.previousModule = this.module;
-			config.moduleStats = { all: 0, bad: 0 };
-			runLoggingCallbacks( "moduleStart", QUnit, {
-				name: this.module
-			});
+		for ( i = notStartedModules.length - 1; i >= 0; i-- ) {
+			startModule = notStartedModules[ i ];
+			startModule.stats = { all: 0, bad: 0, started: now() };
+			emit( "suiteStart", startModule.suiteReport.start( true ) );
+			runLoggingCallbacks( "moduleStart", {
+				name: startModule.name,
+				tests: startModule.tests
+			} );
 		}
 
 		config.current = this;
 
-		this.testEnvironment = extend({
-			setup: function() {},
-			teardown: function() {}
-		}, this.moduleTestEnvironment );
+		this.testEnvironment = extend( {}, module.testEnvironment );
 
-		this.started = +new Date();
-		runLoggingCallbacks( "testStart", QUnit, {
+		this.started = now();
+		emit( "testStart", this.testReport.start( true ) );
+		runLoggingCallbacks( "testStart", {
 			name: this.testName,
-			module: this.module
-		});
-
-		/*jshint camelcase:false */
-
-
-		/**
-		 * Expose the current test environment.
-		 *
-		 * @deprecated since 1.12.0: Use QUnit.config.current.testEnvironment instead.
-		 */
-		QUnit.current_testEnvironment = this.testEnvironment;
-
-		/*jshint camelcase:true */
+			module: module.name,
+			testId: this.testId,
+			previousFailure: this.previousFailure
+		} );
 
 		if ( !config.pollution ) {
 			saveGlobal();
 		}
-		if ( config.notrycatch ) {
-			this.testEnvironment.setup.call( this.testEnvironment, QUnit.assert );
-			return;
-		}
-		try {
-			this.testEnvironment.setup.call( this.testEnvironment, QUnit.assert );
-		} catch( e ) {
-			QUnit.pushFailure( "Setup failed on " + this.testName + ": " + ( e.message || e ), extractStacktrace( e, 1 ) );
-		}
 	},
+
 	run: function() {
+		var promise;
+
 		config.current = this;
 
-		var running = id( "qunit-testresult" );
-
-		if ( running ) {
-			running.innerHTML = "Running: <br/>" + this.nameHtml;
-		}
-
-		if ( this.async ) {
-			QUnit.stop();
-		}
-
-		this.callbackStarted = +new Date();
+		this.callbackStarted = now();
 
 		if ( config.notrycatch ) {
-			this.callback.call( this.testEnvironment, QUnit.assert );
-			this.callbackRuntime = +new Date() - this.callbackStarted;
+			runTest( this );
 			return;
 		}
 
 		try {
-			this.callback.call( this.testEnvironment, QUnit.assert );
-			this.callbackRuntime = +new Date() - this.callbackStarted;
-		} catch( e ) {
-			this.callbackRuntime = +new Date() - this.callbackStarted;
+			runTest( this );
+		} catch ( e ) {
+			this.pushFailure( "Died on test #" + ( this.assertions.length + 1 ) + " " +
+				this.stack + ": " + ( e.message || e ), extractStacktrace( e, 0 ) );
 
-			QUnit.pushFailure( "Died on test #" + (this.assertions.length + 1) + " " + this.stack + ": " + ( e.message || e ), extractStacktrace( e, 0 ) );
-			// else next test will carry the responsibility
+			// Else next test will carry the responsibility
 			saveGlobal();
 
 			// Restart the tests if they're blocking
 			if ( config.blocking ) {
-				QUnit.start();
+				internalRecover( this );
 			}
+		}
+
+		function runTest( test ) {
+			promise = test.callback.call( test.testEnvironment, test.assert );
+			test.resolvePromise( promise );
 		}
 	},
-	teardown: function() {
-		config.current = this;
-		if ( config.notrycatch ) {
-			if ( typeof this.callbackRuntime === "undefined" ) {
-				this.callbackRuntime = +new Date() - this.callbackStarted;
-			}
-			this.testEnvironment.teardown.call( this.testEnvironment, QUnit.assert );
-			return;
-		} else {
-			try {
-				this.testEnvironment.teardown.call( this.testEnvironment, QUnit.assert );
-			} catch( e ) {
-				QUnit.pushFailure( "Teardown failed on " + this.testName + ": " + ( e.message || e ), extractStacktrace( e, 1 ) );
-			}
-		}
+
+	after: function() {
 		checkPollution();
 	},
+
+	queueHook: function( hook, hookName, hookOwner ) {
+		var promise,
+			test = this;
+		return function runHook() {
+			if ( hookName === "before" ) {
+				if ( hookOwner.unskippedTestsRun !== 0 ) {
+					return;
+				}
+
+				test.preserveEnvironment = true;
+			}
+
+			if ( hookName === "after" &&
+				hookOwner.unskippedTestsRun !== numberOfUnskippedTests( hookOwner ) - 1 &&
+				config.queue.length > 2 ) {
+				return;
+			}
+
+			config.current = test;
+			if ( config.notrycatch ) {
+				callHook();
+				return;
+			}
+			try {
+				callHook();
+			} catch ( error ) {
+				test.pushFailure( hookName + " failed on " + test.testName + ": " +
+				( error.message || error ), extractStacktrace( error, 0 ) );
+			}
+
+			function callHook() {
+				promise = hook.call( test.testEnvironment, test.assert );
+				test.resolvePromise( promise, hookName );
+			}
+		};
+	},
+
+	// Currently only used for module level hooks, can be used to add global level ones
+	hooks: function( handler ) {
+		var hooks = [];
+
+		function processHooks( test, module ) {
+			if ( module.parentModule ) {
+				processHooks( test, module.parentModule );
+			}
+			if ( module.hooks && objectType( module.hooks[ handler ] ) === "function" ) {
+				hooks.push( test.queueHook( module.hooks[ handler ], handler, module ) );
+			}
+		}
+
+		// Hooks are ignored on skipped tests
+		if ( !this.skip ) {
+			processHooks( this, this.module );
+		}
+		return hooks;
+	},
+
 	finish: function() {
 		config.current = this;
 		if ( config.requireExpects && this.expected === null ) {
-			QUnit.pushFailure( "Expected number of assertions to be defined, but expect() was not called.", this.stack );
+			this.pushFailure( "Expected number of assertions to be defined, but expect() was " +
+				"not called.", this.stack );
 		} else if ( this.expected !== null && this.expected !== this.assertions.length ) {
-			QUnit.pushFailure( "Expected " + this.expected + " assertions, but " + this.assertions.length + " were run", this.stack );
+			this.pushFailure( "Expected " + this.expected + " assertions, but " +
+				this.assertions.length + " were run", this.stack );
 		} else if ( this.expected === null && !this.assertions.length ) {
-			QUnit.pushFailure( "Expected at least one assertion, but none were run - call expect(0) to accept zero assertions.", this.stack );
+			this.pushFailure( "Expected at least one assertion, but none were run - call " +
+				"expect(0) to accept zero assertions.", this.stack );
 		}
 
-		var i, assertion, a, b, time, li, ol,
-			test = this,
-			good = 0,
+		var i,
+			module = this.module,
+			moduleName = module.name,
+			testName = this.testName,
+			skipped = !!this.skip,
+			todo = !!this.todo,
 			bad = 0,
-			tests = id( "qunit-tests" );
+			storage = config.storage;
 
-		this.runtime = +new Date() - this.started;
+		this.runtime = now() - this.started;
+
 		config.stats.all += this.assertions.length;
-		config.moduleStats.all += this.assertions.length;
+		module.stats.all += this.assertions.length;
 
-		if ( tests ) {
-			ol = document.createElement( "ol" );
-			ol.className = "qunit-assert-list";
-
-			for ( i = 0; i < this.assertions.length; i++ ) {
-				assertion = this.assertions[i];
-
-				li = document.createElement( "li" );
-				li.className = assertion.result ? "pass" : "fail";
-				li.innerHTML = assertion.message || ( assertion.result ? "okay" : "failed" );
-				ol.appendChild( li );
-
-				if ( assertion.result ) {
-					good++;
-				} else {
-					bad++;
-					config.stats.bad++;
-					config.moduleStats.bad++;
-				}
-			}
-
-			// store result when possible
-			if ( QUnit.config.reorder && defined.sessionStorage ) {
-				if ( bad ) {
-					sessionStorage.setItem( "qunit-test-" + this.module + "-" + this.testName, bad );
-				} else {
-					sessionStorage.removeItem( "qunit-test-" + this.module + "-" + this.testName );
-				}
-			}
-
-			if ( bad === 0 ) {
-				addClass( ol, "qunit-collapsed" );
-			}
-
-			// `b` initialized at top of scope
-			b = document.createElement( "strong" );
-			b.innerHTML = this.nameHtml + " <b class='counts'>(<b class='failed'>" + bad + "</b>, <b class='passed'>" + good + "</b>, " + this.assertions.length + ")</b>";
-
-			addEvent(b, "click", function() {
-				var next = b.parentNode.lastChild,
-					collapsed = hasClass( next, "qunit-collapsed" );
-				( collapsed ? removeClass : addClass )( next, "qunit-collapsed" );
-			});
-
-			addEvent(b, "dblclick", function( e ) {
-				var target = e && e.target ? e.target : window.event.srcElement;
-				if ( target.nodeName.toLowerCase() === "span" || target.nodeName.toLowerCase() === "b" ) {
-					target = target.parentNode;
-				}
-				if ( window.location && target.nodeName.toLowerCase() === "strong" ) {
-					window.location = QUnit.url({ testNumber: test.testNumber });
-				}
-			});
-
-			// `time` initialized at top of scope
-			time = document.createElement( "span" );
-			time.className = "runtime";
-			time.innerHTML = this.runtime + " ms";
-
-			// `li` initialized at top of scope
-			li = id( this.id );
-			li.className = bad ? "fail" : "pass";
-			li.removeChild( li.firstChild );
-			a = li.firstChild;
-			li.appendChild( b );
-			li.appendChild( a );
-			li.appendChild( time );
-			li.appendChild( ol );
-
-		} else {
-			for ( i = 0; i < this.assertions.length; i++ ) {
-				if ( !this.assertions[i].result ) {
-					bad++;
-					config.stats.bad++;
-					config.moduleStats.bad++;
-				}
+		for ( i = 0; i < this.assertions.length; i++ ) {
+			if ( !this.assertions[ i ].result ) {
+				bad++;
+				config.stats.bad++;
+				module.stats.bad++;
 			}
 		}
 
-		runLoggingCallbacks( "testDone", QUnit, {
-			name: this.testName,
-			module: this.module,
+		notifyTestsRan( module, skipped );
+
+		// Store result when possible
+		if ( storage ) {
+			if ( bad ) {
+				storage.setItem( "qunit-test-" + moduleName + "-" + testName, bad );
+			} else {
+				storage.removeItem( "qunit-test-" + moduleName + "-" + testName );
+			}
+		}
+
+		// After emitting the js-reporters event we cleanup the assertion data to
+		// avoid leaking it. It is not used by the legacy testDone callbacks.
+		emit( "testEnd", this.testReport.end( true ) );
+		this.testReport.slimAssertions();
+
+		runLoggingCallbacks( "testDone", {
+			name: testName,
+			module: moduleName,
+			skipped: skipped,
+			todo: todo,
 			failed: bad,
 			passed: this.assertions.length - bad,
 			total: this.assertions.length,
-			runtime: this.runtime,
-			// DEPRECATED: this property will be removed in 2.0.0, use runtime instead
-			duration: this.runtime
-		});
+			runtime: skipped ? 0 : this.runtime,
 
-		QUnit.reset();
+			// HTML Reporter use
+			assertions: this.assertions,
+			testId: this.testId,
+
+			// Source of Test
+			source: this.stack
+		} );
+
+		if ( module.testsRun === numberOfTests( module ) ) {
+			logSuiteEnd( module );
+
+			// Check if the parent modules, iteratively, are done. If that the case,
+			// we emit the `suiteEnd` event and trigger `moduleDone` callback.
+			let parent = module.parentModule;
+			while ( parent && parent.testsRun === numberOfTests( parent ) ) {
+				logSuiteEnd( parent );
+				parent = parent.parentModule;
+			}
+		}
 
 		config.current = undefined;
+
+		function logSuiteEnd( module ) {
+			emit( "suiteEnd", module.suiteReport.end( true ) );
+			runLoggingCallbacks( "moduleDone", {
+				name: module.name,
+				tests: module.tests,
+				failed: module.stats.bad,
+				passed: module.stats.all - module.stats.bad,
+				total: module.stats.all,
+				runtime: now() - module.stats.started
+			} );
+		}
 	},
 
-	queue: function() {
-		var bad,
+	preserveTestEnvironment: function() {
+		if ( this.preserveEnvironment ) {
+			this.module.testEnvironment = this.testEnvironment;
+			this.testEnvironment = extend( {}, this.module.testEnvironment );
+		}
+	},
+
+	queue() {
+		const test = this;
+
+		if ( !this.valid() ) {
+			return;
+		}
+
+		function runTest() {
+
+			// Each of these can by async
+			ProcessingQueue.addImmediate( [
+				function() {
+					test.before();
+				},
+
+				test.hooks( "before" ),
+
+				function() {
+					test.preserveTestEnvironment();
+				},
+
+				test.hooks( "beforeEach" ),
+
+				function() {
+					test.run();
+				},
+
+				test.hooks( "afterEach" ).reverse(),
+				test.hooks( "after" ).reverse(),
+
+				function() {
+					test.after();
+				},
+
+				function() {
+					test.finish();
+				}
+			] );
+		}
+
+		const previousFailCount = config.storage &&
+				+config.storage.getItem( "qunit-test-" + this.module.name + "-" + this.testName );
+
+		// Prioritize previously failed tests, detected from storage
+		const prioritize = config.reorder && !!previousFailCount;
+
+		this.previousFailure = !!previousFailCount;
+
+		ProcessingQueue.add( runTest, prioritize, config.seed );
+
+		// If the queue has already finished, we manually process the new test
+		if ( ProcessingQueue.finished ) {
+			ProcessingQueue.advance();
+		}
+	},
+
+	pushResult: function( resultInfo ) {
+		if ( this !== config.current ) {
+			throw new Error( "Assertion occured after test had finished." );
+		}
+
+		// Destructure of resultInfo = { result, actual, expected, message, negative }
+		var source,
+			details = {
+				module: this.module.name,
+				name: this.testName,
+				result: resultInfo.result,
+				message: resultInfo.message,
+				actual: resultInfo.actual,
+				expected: resultInfo.expected,
+				testId: this.testId,
+				negative: resultInfo.negative || false,
+				runtime: now() - this.started,
+				todo: !!this.todo
+			};
+
+		if ( !resultInfo.result ) {
+			source = resultInfo.source || sourceFromStacktrace();
+
+			if ( source ) {
+				details.source = source;
+			}
+		}
+
+		this.logAssertion( details );
+
+		this.assertions.push( {
+			result: !!resultInfo.result,
+			message: resultInfo.message
+		} );
+	},
+
+	pushFailure: function( message, source, actual ) {
+		if ( !( this instanceof Test ) ) {
+			throw new Error( "pushFailure() assertion outside test context, was " +
+				sourceFromStacktrace( 2 ) );
+		}
+
+		this.pushResult( {
+			result: false,
+			message: message || "error",
+			actual: actual || null,
+			expected: null,
+			source
+		} );
+	},
+
+	/**
+	 * Log assertion details using both the old QUnit.log interface and
+	 * QUnit.on( "assertion" ) interface.
+	 *
+	 * @private
+	 */
+	logAssertion( details ) {
+		runLoggingCallbacks( "log", details );
+
+		const assertion = {
+			passed: details.result,
+			actual: details.actual,
+			expected: details.expected,
+			message: details.message,
+			stack: details.source,
+			todo: details.todo
+		};
+		this.testReport.pushAssertion( assertion );
+		emit( "assertion", assertion );
+	},
+
+	resolvePromise: function( promise, phase ) {
+		var then, resume, message,
 			test = this;
+		if ( promise != null ) {
+			then = promise.then;
+			if ( objectType( then ) === "function" ) {
+				resume = internalStop( test );
+				then.call(
+					promise,
+					function() { resume(); },
+					function( error ) {
+						message = "Promise rejected " +
+							( !phase ? "during" : phase.replace( /Each$/, "" ) ) +
+							" \"" + test.testName + "\": " +
+							( ( error && error.message ) || error );
+						test.pushFailure( message, extractStacktrace( error, 0 ) );
 
-		synchronize(function() {
-			test.init();
-		});
-		function run() {
-			// each of these can by async
-			synchronize(function() {
-				test.setup();
-			});
-			synchronize(function() {
-				test.run();
-			});
-			synchronize(function() {
-				test.teardown();
-			});
-			synchronize(function() {
-				test.finish();
-			});
+						// Else next test will carry the responsibility
+						saveGlobal();
+
+						// Unblock
+						resume();
+					}
+				);
+			}
+		}
+	},
+
+	valid: function() {
+		var filter = config.filter,
+			regexFilter = /^(!?)\/([\w\W]*)\/(i?$)/.exec( filter ),
+			module = config.module && config.module.toLowerCase(),
+			fullName = ( this.module.name + ": " + this.testName );
+
+		function moduleChainNameMatch( testModule ) {
+			var testModuleName = testModule.name ? testModule.name.toLowerCase() : null;
+			if ( testModuleName === module ) {
+				return true;
+			} else if ( testModule.parentModule ) {
+				return moduleChainNameMatch( testModule.parentModule );
+			} else {
+				return false;
+			}
 		}
 
-		// `bad` initialized at top of scope
-		// defer when previous test run passed, if storage is available
-		bad = QUnit.config.reorder && defined.sessionStorage &&
-						+sessionStorage.getItem( "qunit-test-" + this.module + "-" + this.testName );
-
-		if ( bad ) {
-			run();
-		} else {
-			synchronize( run, true );
+		function moduleChainIdMatch( testModule ) {
+			return inArray( testModule.moduleId, config.moduleId ) ||
+				testModule.parentModule && moduleChainIdMatch( testModule.parentModule );
 		}
+
+		// Internally-generated tests are always valid
+		if ( this.callback && this.callback.validTest ) {
+			return true;
+		}
+
+		if ( config.moduleId && config.moduleId.length > 0 &&
+			!moduleChainIdMatch( this.module ) ) {
+
+			return false;
+		}
+
+		if ( config.testId && config.testId.length > 0 &&
+			!inArray( this.testId, config.testId ) ) {
+
+			return false;
+		}
+
+		if ( module && !moduleChainNameMatch( this.module ) ) {
+			return false;
+		}
+
+		if ( !filter ) {
+			return true;
+		}
+
+		return regexFilter ?
+			this.regexFilter( !!regexFilter[ 1 ], regexFilter[ 2 ], regexFilter[ 3 ], fullName ) :
+			this.stringFilter( filter, fullName );
+	},
+
+	regexFilter: function( exclude, pattern, flags, fullName ) {
+		var regex = new RegExp( pattern, flags );
+		var match = regex.test( fullName );
+
+		return match !== exclude;
+	},
+
+	stringFilter: function( filter, fullName ) {
+		filter = filter.toLowerCase();
+		fullName = fullName.toLowerCase();
+
+		var include = filter.charAt( 0 ) !== "!";
+		if ( !include ) {
+			filter = filter.slice( 1 );
+		}
+
+		// If the filter matches, we need to honour include
+		if ( fullName.indexOf( filter ) !== -1 ) {
+			return include;
+		}
+
+		// Otherwise, do the opposite
+		return !include;
 	}
 };
+
+export function pushFailure() {
+	if ( !config.current ) {
+		throw new Error( "pushFailure() assertion outside test context, in " +
+			sourceFromStacktrace( 2 ) );
+	}
+
+	// Gets current test obj
+	var currentTest = config.current;
+
+	return currentTest.pushFailure.apply( currentTest, arguments );
+}
+
+function saveGlobal() {
+	config.pollution = [];
+
+	if ( config.noglobals ) {
+		for ( var key in global ) {
+			if ( hasOwn.call( global, key ) ) {
+
+				// In Opera sometimes DOM element ids show up here, ignore them
+				if ( /^qunit-test-output/.test( key ) ) {
+					continue;
+				}
+				config.pollution.push( key );
+			}
+		}
+	}
+}
+
+function checkPollution() {
+	var newGlobals,
+		deletedGlobals,
+		old = config.pollution;
+
+	saveGlobal();
+
+	newGlobals = diff( config.pollution, old );
+	if ( newGlobals.length > 0 ) {
+		pushFailure( "Introduced global variable(s): " + newGlobals.join( ", " ) );
+	}
+
+	deletedGlobals = diff( old, config.pollution );
+	if ( deletedGlobals.length > 0 ) {
+		pushFailure( "Deleted global variable(s): " + deletedGlobals.join( ", " ) );
+	}
+}
+
+// Will be exposed as QUnit.test
+export function test( testName, callback ) {
+	if ( focused ) {
+		return;
+	}
+
+	const newTest = new Test( {
+		testName: testName,
+		callback: callback
+	} );
+
+	newTest.queue();
+}
+
+export function todo( testName, callback ) {
+	if ( focused ) {
+		return;
+	}
+
+	const newTest = new Test( {
+		testName,
+		callback,
+		todo: true
+	} );
+
+	newTest.queue();
+}
+
+// Will be exposed as QUnit.skip
+export function skip( testName ) {
+	if ( focused ) {
+		return;
+	}
+
+	const test = new Test( {
+		testName: testName,
+		skip: true
+	} );
+
+	test.queue();
+}
+
+// Will be exposed as QUnit.only
+export function only( testName, callback ) {
+	if ( focused ) {
+		return;
+	}
+
+	config.queue.length = 0;
+	focused = true;
+
+	const newTest = new Test( {
+		testName: testName,
+		callback: callback
+	} );
+
+	newTest.queue();
+}
+
+// Put a hold on processing and return a function that will release it.
+export function internalStop( test ) {
+	var released = false;
+
+	test.semaphore += 1;
+	config.blocking = true;
+
+	// Set a recovery timeout, if so configured.
+	if ( config.testTimeout && defined.setTimeout ) {
+		clearTimeout( config.timeout );
+		config.timeout = setTimeout( function() {
+			pushFailure( "Test timed out", sourceFromStacktrace( 2 ) );
+			internalRecover( test );
+		}, config.testTimeout );
+	}
+
+	return function resume() {
+		if ( released ) {
+			return;
+		}
+
+		released = true;
+		test.semaphore -= 1;
+		internalStart( test );
+	};
+}
+
+// Forcefully release all processing holds.
+function internalRecover( test ) {
+	test.semaphore = 0;
+	internalStart( test );
+}
+
+// Release a processing hold, scheduling a resumption attempt if no holds remain.
+function internalStart( test ) {
+
+	// If semaphore is non-numeric, throw error
+	if ( isNaN( test.semaphore ) ) {
+		test.semaphore = 0;
+
+		pushFailure(
+			"Invalid value on test.semaphore",
+			sourceFromStacktrace( 2 )
+		);
+		return;
+	}
+
+	// Don't start until equal number of stop-calls
+	if ( test.semaphore > 0 ) {
+		return;
+	}
+
+	// Throw an Error if start is called more often than stop
+	if ( test.semaphore < 0 ) {
+		test.semaphore = 0;
+
+		pushFailure(
+			"Tried to restart test while already started (test's semaphore was 0 already)",
+			sourceFromStacktrace( 2 )
+		);
+		return;
+	}
+
+	// Add a slight delay to allow more assertions etc.
+	if ( defined.setTimeout ) {
+		if ( config.timeout ) {
+			clearTimeout( config.timeout );
+		}
+		config.timeout = setTimeout( function() {
+			if ( test.semaphore > 0 ) {
+				return;
+			}
+
+			if ( config.timeout ) {
+				clearTimeout( config.timeout );
+			}
+
+			begin();
+		}, 13 );
+	} else {
+		begin();
+	}
+}
+
+function collectTests( module ) {
+	const tests = [].concat( module.tests );
+	const modules = [ ...module.childModules ];
+
+	// Do a breadth-first traversal of the child modules
+	while ( modules.length ) {
+		const nextModule =  modules.shift();
+		tests.push.apply( tests, nextModule.tests );
+		modules.push( ...nextModule.childModules );
+	}
+
+	return tests;
+}
+
+function numberOfTests( module ) {
+	return collectTests( module ).length;
+}
+
+function numberOfUnskippedTests( module ) {
+	return collectTests( module ).filter( test => !test.skip ).length;
+}
+
+function notifyTestsRan( module, skipped ) {
+	module.testsRun++;
+	if ( !skipped ) {
+		module.unskippedTestsRun++;
+	}
+	while ( ( module = module.parentModule ) ) {
+		module.testsRun++;
+		if ( !skipped ) {
+			module.unskippedTestsRun++;
+		}
+	}
+}
