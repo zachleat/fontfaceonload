@@ -1,4 +1,4 @@
-/*! fontfaceonload - v1.0.1 - 2017-06-28
+/*! fontfaceonload - v1.0.2 - 2017-06-28
  * https://github.com/zachleat/fontfaceonload
  * Copyright (c) 2017 Zach Leatherman (@zachleat)
  * MIT License */
@@ -51,7 +51,7 @@
 			'font-variant:normal',
 			'white-space:nowrap'
 		],
-		html = '<div style="%s">' + TEST_STRING + '</div>';
+		html = '<div style="%s" aria-hidden="true">' + TEST_STRING + '</div>';
 
 	var FontFaceOnloadInstance = function() {
 		this.fontFamily = '';
