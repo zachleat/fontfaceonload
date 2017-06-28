@@ -56,6 +56,7 @@
 		this.sansSerif = undefined;
 		this.parent = undefined;
 		this.options = {};
+		this.erorred = false;
 	};
 
 	FontFaceOnloadInstance.prototype.getMeasurements = function () {
@@ -137,6 +138,7 @@
 
 				options.success();
 			} else if( isTimeout() ) {
+				this.erorred = true;
 				options.error();
 			} else {
 				if( !appended && "requestAnimationFrame" in window ) {
@@ -164,16 +166,22 @@
 
 	FontFaceOnloadInstance.prototype.checkFontFaces = function( timeout ) {
 		var _t = this;
+		var found = false;
 		doc.fonts.forEach(function( font ) {
 			if( _t.cleanFamilyName( font.family ) === _t.cleanFamilyName( _t.fontFamily ) &&
 				_t.cleanWeight( font.weight ) === _t.cleanWeight( _t.options.weight ) &&
 				font.style === _t.options.style ) {
+				found = true;
 				font.load().then(function() {
 					_t.options.success();
 					win.clearTimeout( timeout );
 				});
 			}
 		});
+		// If the font has just been added to the document it may not have registered yet
+		if (found === false && this.erorred === false) {
+			window.setTimeout(this.checkFontFaces.bind(this, timeout ), _t.delay);
+		}
 	};
 
 	FontFaceOnloadInstance.prototype.init = function( fontFamily, options ) {
@@ -192,6 +200,7 @@
 		if( !options.glyphs && "fonts" in doc ) {
 			if( options.timeout ) {
 				timeout = win.setTimeout(function() {
+					this.erorred = true;
 					options.error();
 				}, options.timeout );
 			}
