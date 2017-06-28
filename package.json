@@ -1,6 +1,6 @@
 {
 	"name": "fontfaceonload",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "A simple utility to execute a callback when a webfont loads.",
 	"main": "src/fontfaceonload.js",
 	"keywords": [

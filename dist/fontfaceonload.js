@@ -1,10 +1,24 @@
-/*! fontfaceonload - v1.0.0 - 2017-06-01
+/*! fontfaceonload - v1.0.1 - 2017-06-28
  * https://github.com/zachleat/fontfaceonload
  * Copyright (c) 2017 Zach Leatherman (@zachleat)
  * MIT License */
 
-;(function( win, doc ) {
-	"use strict";
+(function (root, factory) {
+	'use strict';
+	if (typeof define === 'function' && define.amd) {
+		// AMD. Register as an anonymous module.
+		define([], factory);
+	} else if (typeof exports === 'object') {
+		// Node. Does not work with strict CommonJS, but
+		// only CommonJS-like environments that support module.exports,
+		// like Node.
+		module.exports = factory();
+	} else {
+		// Browser globals (root is window)
+		root.FontFaceOnload = factory();
+	}
+}(this, function () {
+	'use strict';
 
 	var TEST_STRING = 'AxmTYklsjo190QW',
 		SANS_SERIF_FONTS = 'sans-serif',
@@ -18,7 +32,8 @@
 			error: function() {},
 			timeout: 5000,
 			weight: '400', // normal
-			style: 'normal'
+			style: 'normal',
+			window: window
 		},
 
 		// See https://github.com/typekit/webfontloader/blob/master/src/core/fontruler.js#L41
@@ -82,7 +97,7 @@
 			serifHtml = html.replace( /\%s/, getStyle(  SERIF_FONTS ) );
 
 		if( !parent ) {
-			parent = that.parent = doc.createElement( "div" );
+			parent = that.parent = options.window.document.createElement( "div" );
 		}
 
 		parent.innerHTML = sansSerifHtml + serifHtml;
@@ -96,7 +111,7 @@
 
 		function hasNewDimensions( dims, el, tolerance ) {
 			return Math.abs( dims.width - el.offsetWidth ) > tolerance ||
-					Math.abs( dims.height - el.offsetHeight ) > tolerance;
+				Math.abs( dims.height - el.offsetHeight ) > tolerance;
 		}
 
 		function isTimeout() {
@@ -105,7 +120,7 @@
 
 		(function checkDimensions() {
 			if( !ref ) {
-				ref = doc.body;
+				ref = options.window.document.body;
 			}
 			if( !appended && ref ) {
 				ref.appendChild( parent );
@@ -122,16 +137,16 @@
 
 			if( appended && dimensions &&
 				( hasNewDimensions( dimensions.sansSerif, sansSerif, options.tolerance ) ||
-					hasNewDimensions( dimensions.serif, serif, options.tolerance ) ) ) {
+				hasNewDimensions( dimensions.serif, serif, options.tolerance ) ) ) {
 
 				options.success();
 			} else if( isTimeout() ) {
 				options.error();
 			} else {
-				if( !appended && "requestAnimationFrame" in window ) {
-					win.requestAnimationFrame( checkDimensions );
+				if( !appended && "requestAnimationFrame" in options.window ) {
+					options.window.requestAnimationFrame( checkDimensions );
 				} else {
-					win.setTimeout( checkDimensions, options.delay );
+					options.window.setTimeout( checkDimensions, options.delay );
 				}
 			}
 		})();
@@ -153,13 +168,13 @@
 
 	FontFaceOnloadInstance.prototype.checkFontFaces = function( timeout ) {
 		var _t = this;
-		doc.fonts.forEach(function( font ) {
+		_t.options.window.document.fonts.forEach(function( font ) {
 			if( _t.cleanFamilyName( font.family ) === _t.cleanFamilyName( _t.fontFamily ) &&
 				_t.cleanWeight( font.weight ) === _t.cleanWeight( _t.options.weight ) &&
 				font.style === _t.options.style ) {
 				font.load().then(function() {
-					_t.options.success();
-					win.clearTimeout( timeout );
+					_t.options.success( font );
+					_t.options.window.clearTimeout( timeout );
 				});
 			}
 		});
@@ -178,9 +193,9 @@
 		this.fontFamily = fontFamily;
 
 		// For some reason this was failing on afontgarde + icon fonts.
-		if( !options.glyphs && "fonts" in doc ) {
+		if( !options.glyphs && "fonts" in options.window.document ) {
 			if( options.timeout ) {
-				timeout = win.setTimeout(function() {
+				timeout = options.window.setTimeout(function() {
 					options.error();
 				}, options.timeout );
 			}
@@ -198,6 +213,5 @@
 		return instance;
 	};
 
-	// intentional global
-	win.FontFaceOnload = FontFaceOnload;
-})( this, this.document );
+	return FontFaceOnload;
+}));
