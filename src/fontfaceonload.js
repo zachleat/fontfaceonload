@@ -46,7 +46,7 @@
 			'font-variant:normal',
 			'white-space:nowrap'
 		],
-		html = '<div style="%s">' + TEST_STRING + '</div>';
+		html = '<div style="%s" aria-hidden="true">' + TEST_STRING + '</div>';
 
 	var FontFaceOnloadInstance = function() {
 		this.fontFamily = '';
