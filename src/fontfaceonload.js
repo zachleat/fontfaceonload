@@ -188,7 +188,7 @@
 		this.fontFamily = fontFamily;
 
 		// For some reason this was failing on afontgarde + icon fonts.
-		if( !options.glyphs && "fonts" in options.window.document ) {
+		if( !options.glyphs && options.window.document.fonts && options.window.document.fonts.forEach) {
 			if( options.timeout ) {
 				timeout = options.window.setTimeout(function() {
 					options.error();
